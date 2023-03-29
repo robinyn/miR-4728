@@ -2,9 +2,9 @@ library(tidyverse)
 library(ggplot2)
 library(stringr)
 
-setwd("~/Dev/spring_project")
+setwd("~/Dev/mir-4728")
 
-dat = read.csv("1_alignments/parsed_output.tsv", sep="\t")
+dat = read.csv("1_alignments/scanb_index/scanb_align_summary.tsv", sep="\t")
 
 dat$SampleID=dat$SampleID %>% 
   str_remove("_S[0-9]*$") %>% 
@@ -84,12 +84,12 @@ total = dat %>%
   mutate(SampleID = str_replace(SampleID, "SKBR3 tot 4728 ", "ASO")) %>% 
   mutate(SampleID = str_replace(SampleID, "SKBR3 tot ctrl ", "Control"))
 
-p = ggplot(total, aes(x=Paired, y=Values, fill=Cat)) +
+p = ggplot(polysome, aes(x=Paired, y=Values, fill=Cat)) +
   geom_bar(stat="identity", position="stack") +
   theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1),
         legend.title=element_blank(),
         plot.title=element_text(hjust=0.5)) +
-  labs(x = "", y="Number of reads", title="Total RNA") +
+  labs(x = "", y="Number of reads", title="Polysome fraction") +
   facet_grid(~SampleID)
 
 print(p)
