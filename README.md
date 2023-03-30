@@ -4,6 +4,15 @@
 
 The data for this project consists of ribosome and polysome profiling data for SKBR3 (HER2-positive breast cancer cell line) treated with antisense oligonucleotide (ASO) to block the miRNA or a control oligonucleotide, with matched total RNA-seq. There are three replicates per condition.
 
+## Analysis environment
+
+A conda environment was created for this analysis and the environment file is attached.
+
+The following tools were not available and were installed manually following the installation steps provided in their respective documentations:
+
+- HISAT2 (v2.2.1)
+- stringtie (v2.2.1)
+
 ## 1. Alignment of reads
 
 ### 1.1. Polysome profiling data
@@ -84,4 +93,16 @@ A custom Python script was used to parse the summary files with the list and vis
 
 #### Transcriptome assembly and gene feature quantification with Stringtie
 
-The aligned reads were used to assemble the transcripts and quantified using Stringie.
+The aligned reads were used to assemble the transcripts for each sample.
+
+```shell
+cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf -o stringtie/assembly/$line.gtf HISAT2/genome_scanb/$line.bam; done;
+```
+
+Then, the assembled transcripts were merged to create a comprehensive and consistent annotation of all of the gene structures found in the all of the samples, so that transcripts can be compared across the samples in subsequent analyses.
+
+```shell
+cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf -o stringtie/assembly/$line.gtf HISAT2/genome_scanb/$line.bam; done;
+```
+
+
