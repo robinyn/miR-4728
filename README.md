@@ -8,6 +8,10 @@ The data for this project consists of ribosome and polysome profiling data for S
 
 A conda environment was created for this analysis and the environment file is attached.
 
+- samtools (v)
+- gfftools (v)
+- htseq (v)
+
 The following tools were not available and were installed manually following the installation steps provided in their respective documentations:
 
 - HISAT2 (v2.2.1)
@@ -91,9 +95,9 @@ ls summary_files | while read file; do echo summary_files/$file; done > sample_l
 
 A custom Python script was used to parse the summary files with the list and visualized using R. The two sets of alignments, with the prebuilt and scanb index, were compared. No significant differences were identified, therefore the alignment with the most up-to-date reference index was used for the subsequent analyses.
 
-#### Transcriptome assembly and gene feature quantification with Stringtie
+#### 1.1.4. Transcriptome assembly and gene feature quantification with Stringtie
 
-The aligned reads were used to assemble the transcripts for each sample.
+While it is possible to skip the transcript assembly steps, since the goal of the project is to identify targets of the micro RNA in question, it would be beneficial to identify any novel transcripts even if the human genome has already been extensively annotated. Therefore, the assembly step was included in the analysis. The aligned reads were used to assemble the transcripts for each sample.
 
 ```shell
 cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf -o stringtie/assembly/$line.gtf HISAT2/genome_scanb/$line.bam; done;
@@ -102,7 +106,32 @@ cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/refe
 Then, the assembled transcripts were merged to create a comprehensive and consistent annotation of all of the gene structures found in the all of the samples, so that transcripts can be compared across the samples in subsequent analyses.
 
 ```shell
-cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf -o stringtie/assembly/$line.gtf HISAT2/genome_scanb/$line.bam; done;
+# First a list of GTF files to be merged has to be made
+cat sample_list | while read line; do echo stringtie/assembly/$line.gtf; done > merge_list.txt
+
+# The list is passed to stringtie to merge
+stringtie --merge -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf --rf -o stringtie/stringtie_merged.gtf merge_list.txt
 ```
 
+The merged file was compared against the original reference annotation to identify novel transcripts.
+
+```shell
+gffcompare -r /raidset/reference/scanb/hg38.giab_gencode41_snp155/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf -o merged stringtie/stringtie_merged.gtf
+```
+
+Finally, the merged GTF file was used as a new reference to quantify the transcripts from the aligned reads.
+
+```shell
+cat sample_list.txt | while read line; do echo $line; stringtie -G stringtie/stringtie_merged.gtf -e -B -A stringtie/counts/$line_gene_abund.tab -o stringtie/counts/$line.gtf HISAT2/genome_scanb/$line.bam; done;
+```
+
+As stringtie is only capable of producing FPKM and TPM values for gene counts instead of the raw counts necessary for downstream analysis with DESeq2, a Python script (prepDE.py3) provided in the stringtie package was used to calculate hypothetical transcript read counts based on the following formula:
+
+    Hypothetical read count = Coverage * Transcript length / Read length
+
+
+
+#### 1.1.5. Gene feature quantification with HTSeq
+
+Because stringtie can only calculate hypothetical read counts instead of producing raw read counts, HTSeq, which is capable of producing raw counts, was used to quantify the trascripts once again, in order to compare the count values produced.
 
