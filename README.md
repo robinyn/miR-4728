@@ -10,9 +10,12 @@ A conda environment was created for this analysis and the environment file is at
 
 - samtools (v)
 - gfftools (v)
+
+Due to dependency issues, a separate conda environment was created for HTseq. The environment file is attached.
+
 - htseq (v)
 
-The following tools were not available and were installed manually following the installation steps provided in their respective documentations:
+The following tools were not available through Conda and were installed manually following the installation steps provided in their respective documentations:
 
 - HISAT2 (v2.2.1)
 - stringtie (v2.2.1)
@@ -95,43 +98,45 @@ ls summary_files | while read file; do echo summary_files/$file; done > sample_l
 
 A custom Python script was used to parse the summary files with the list and visualized using R. The two sets of alignments, with the prebuilt and scanb index, were compared. No significant differences were identified, therefore the alignment with the most up-to-date reference index was used for the subsequent analyses.
 
-#### 1.1.4. Transcriptome assembly and gene feature quantification with Stringtie
+#### 1.1.4. Read counts with Stringtie
 
-While it is possible to skip the transcript assembly steps, since the goal of the project is to identify targets of the micro RNA in question, it would be beneficial to identify any novel transcripts even if the human genome has already been extensively annotated. Therefore, the assembly step was included in the analysis. The aligned reads were used to assemble the transcripts for each sample.
-
-```shell
-cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf -o stringtie/assembly/$line.gtf HISAT2/genome_scanb/$line.bam; done;
-```
-
-Then, the assembled transcripts were merged to create a comprehensive and consistent annotation of all of the gene structures found in the all of the samples, so that transcripts can be compared across the samples in subsequent analyses.
+While it is possible to assemble the transcripts from the alignments to produce a new annotation GTF file and detecting novel transcripts, this is not necessary for this project as we are only interested in the differential expression and translation of known genes between the control and case groups. Therefore, Stringtie was used directly with the original Gencode annotation file as the reference to produce read counts.
 
 ```shell
-# First a list of GTF files to be merged has to be made
-cat sample_list | while read line; do echo stringtie/assembly/$line.gtf; done > merge_list.txt
-
-# The list is passed to stringtie to merge
-stringtie --merge -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf --rf -o stringtie/stringtie_merged.gtf merge_list.txt
+cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assmebly.annotation.ucsc.filtered.gtf -e -B -A stringtie/counts/${line}_gene_abund.tab -o stringtie/counts/$line.gtf HISAT2/genome_scanb/$line.bam; done;
 ```
 
-The merged file was compared against the original reference annotation to identify novel transcripts.
+Since Stringtie can only produce FPKM and TPM values, a Python script (prepDE.py3) provided in the Stringtie package was used to calculate hypothetical read counts using the following formula:
+
+Hypothetical read count = Coverage * Transcript length / Read length
+
+The script can be run in the directory with all of the subdirectories where the GTF files resulting from the last step are stored. In this case "stringtie/counts" directory.
 
 ```shell
-gffcompare -r /raidset/reference/scanb/hg38.giab_gencode41_snp155/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf -o merged stringtie/stringtie_merged.gtf
+prepDE.py3
 ```
-
-Finally, the merged GTF file was used as a new reference to quantify the transcripts from the aligned reads.
-
-```shell
-cat sample_list.txt | while read line; do echo $line; stringtie -G stringtie/stringtie_merged.gtf -e -B -A stringtie/counts/$line_gene_abund.tab -o stringtie/counts/$line.gtf HISAT2/genome_scanb/$line.bam; done;
-```
-
-As stringtie is only capable of producing FPKM and TPM values for gene counts instead of the raw counts necessary for downstream analysis with DESeq2, a Python script (prepDE.py3) provided in the stringtie package was used to calculate hypothetical transcript read counts based on the following formula:
-
-    Hypothetical read count = Coverage * Transcript length / Read length
-
-
 
 #### 1.1.5. Gene feature quantification with HTSeq
 
 Because stringtie can only calculate hypothetical read counts instead of producing raw read counts, HTSeq, which is capable of producing raw counts, was used to quantify the trascripts once again, in order to compare the count values produced.
+
+```shell
+cat sample_list.txt | while read line; do sample_name=$(echo $line | cut -d "/" -f 1); echo $line; htseq-count -f bam -r pos -s reverse -t exon -m intersection-nonempty  --nonunique=none --addtional-attr=gene_name HISAT2/genome_scanb/$line.bam /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf > htseq/$sample_name.count; done;
+```
+
+### 1.2. Ribosome profiling data
+
+#### 1.2.1. Building the index
+
+In order to build an index file for Novoalign with known transcripts and splice sites, the protocol outlined in the [Novoalign documentation](https://www.novocraft.com/documentation/novoalign-2/novoalign-user-guide/rnaseq-analysis-mrna-and-the-spliceosome/) was used.
+
+#### Preparing genome and transcript annotation files
+
+The included Novoindex software, for generating the index file for Novoalign to use as the reference while mapping, requires three input FASTA files:
+
+    1. Splice sites file
+    2. Transcripts file
+    3. Masked genome file (where genes are masked as Ns)
+
+To generate the first two, the **MakeTranscriptome** program from the **Useq** package is required. The following [documentation](https://useq.sourceforge.net/usageRNASeq.html) was used to generate the FASTA files.
 
