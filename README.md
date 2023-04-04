@@ -140,6 +140,27 @@ The included Novoindex software, for generating the index file for Novoalign to 
 
 To generate the first two, the **MakeTranscriptome** program from the **Useq** package is required. The following [documentation](https://useq.sourceforge.net/usageRNASeq.html) was used to generate the FASTA files.
 
+#### Prepare transcript annotation
+
+The Gencode v41 human genome annotation was downloaded from UCSC Ensembl Table Browser according to the instructions found in the documentation above.
+
+```shell
+# Uncompress annotation
+gunzip refFlat.txt.gz
+
+# Remove # from the header line using vim
+vim refFlat.txt
+
+# Preprocess annotation file to refFlat format
+java -jar ~/bin/useq/Apps/PrintSelectColumns -i 10,0,1,2,3,4,5,6,7,8,9 -f refFlat.txt
+
+# Rename file
+mv refFlat.PSC.xls refFlat.corr.txt
+
+# Remove _alt and _fix chromosomes
+cat refFlat.corr.txt | grep -v "_alt" | grep -v "_fix" > refFlat.corr.no.alt.txt
+```
+
 #### Split genome by chromosome
 
 The **MakeTranscriptome** software requires that the genome file is split by chromosomes so that there is a FASTA file for each chromosome. This was achieved by:
@@ -158,6 +179,18 @@ zcat genome_file.fasta.gz | awk '{if(NR==9) {print $0} else {if($0 ~ /^>/) {prin
 # Compress file
 gzip genome_singleline.fasta
 
+# Make a new folder to store the files
+mkdir /raidset/reference/novoalign/chromosomes
+
 # Use chromosomes file to generate individual FASTA files
-cat chromosomes.txt | while read line; do file_name=$(echo line | tr -d ">"); echo $file_name; zgrep -A1 
+cat chromosomes.txt | while read line; do file_name=$(echo line | tr -d ">"); echo $file_name; zgrep -A1 ^>${line}$ > /raidset/reference/novoalign/chromosomes/$file_name.fasta; done;
 ```
+
+#### Build transcriptome FASTAs
+
+The FASTA files and the processed annotation files can now be used to generate the two transcriptome FASTA files. The ***splice junction radius*** was set to 72 after confirming that the read length for the Ribo-seq data was 76 nt.
+
+```shell
+java -jar ~/bin/useq/Apps/MakeTranscriptome -f ./chromosomes -u refFlat.corr.no.alt.txt -r 72
+```
+
