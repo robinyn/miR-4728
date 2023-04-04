@@ -140,3 +140,24 @@ The included Novoindex software, for generating the index file for Novoalign to 
 
 To generate the first two, the **MakeTranscriptome** program from the **Useq** package is required. The following [documentation](https://useq.sourceforge.net/usageRNASeq.html) was used to generate the FASTA files.
 
+#### Split genome by chromosome
+
+The **MakeTranscriptome** software requires that the genome file is split by chromosomes so that there is a FASTA file for each chromosome. This was achieved by:
+
+    1. Creating a text file listing the individual chromosomes present in the genome file
+    2. Looping over the text file and grepping sequences with the headers
+    3. outputting the results to individual FASTA files
+
+```shell
+# Generate text file with chromosomes
+cat genome_file.fasta.gz | gunzip | grep "^>" | tr -d ">" > ~/ribosome/novoalign/chromosomes.txt
+
+# Convert multi-line FASTA to single-line FASTA
+zcat genome_file.fasta.gz | awk '{if(NR==9) {print $0} else {if($0 ~ /^>/) {print "\n"$0} else {printf $0}}}' > /raidset/eu3337ha-s/reference/novoalign/genome_singleline.fasta
+
+# Compress file
+gzip genome_singleline.fasta
+
+# Use chromosomes file to generate individual FASTA files
+cat chromosomes.txt | while read line; do file_name=$(echo line | tr -d ">"); echo $file_name; zgrep -A1 
+```
