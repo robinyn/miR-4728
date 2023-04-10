@@ -19,6 +19,8 @@ The following tools were not available through Conda and were installed manually
 
 - HISAT2 (v2.2.1)
 - stringtie (v2.2.1)
+- USeq (v9.3.4)
+- Novoalign (v)
 
 ## 1. Alignment of reads
 
