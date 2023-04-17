@@ -10,17 +10,29 @@ A conda environment was created for this analysis and the environment file is at
 
 - samtools (v)
 - gfftools (v)
-
-Due to dependency issues, a separate conda environment was created for HTseq. The environment file is attached.
-
 - htseq (v)
+- fastqc (v)
 
 The following tools were not available through Conda and were installed manually following the installation steps provided in their respective documentations:
 
 - HISAT2 (v2.2.1)
-- stringtie (v2.2.1)
-- USeq (v9.3.4)
 - Novoalign (v)
+
+## 0. Quality control
+
+Both datasets were tested using FastQC to ensure that all sample files were suitable for use in downstream analyses.
+
+### 0.1. Polysome profiling data
+
+```shell
+cat files_list.txt | while read file; do fastqc -o 0_fastqc --noextract $file
+```
+
+### 0.2. Ribosome profiling data
+
+```shell
+cat files_list.txt | while read file; do fastqc -o 0_fastqc --noextract $file
+```
 
 ## 1. Alignment of reads
 
@@ -30,64 +42,14 @@ The following tools were not available through Conda and were installed manually
 
 The GRCh38.p13 assembly of the human genome from the Genome Reference Consortium and the Gencode 43 release of the human transcriptome annotation (Ensembl release 109) was used to build a reference index for the alignment, following the [protocol](http://daehwankimlab.github.io/hisat2/howto/) provided in the HISAT2 documentation.
 
-Unfortunately, the indexing of a human genome with transcript annotations required over 160GB of memory and could not be completed. Therefore, a prebuilt index provided by [HISAT2](http://daehwankimlab.github.io/hisat2/download/) was used for the alignment.
-
-Due to the lack of documentation on the version of the genome annotation used for the prebuilt index files, a comparison between the exons and splice sites included in the prebuilt index to the ones in the Gencode 43 release of the human transcriptome annotation was made.
-
-#### Extracting the exons and splice sites from prebuilt index
-
-The HISAT2 team provides a script to inspect and extract information from a set of index files generated using their suite.
-
-```shell
-hisat2-inspect --ss-all grch38_tran/genome_tran > prebuilt.ss
-hisat2-inspect --exon grch38_tran/genome_tran > prebuilt.exons
-```
-
-#### Extracting the exons and splice sites from Gencode annotation
-
-Similarly, the tools designed for building index files from genome assemblies and annotation files can be used to generate the same files for the Gencode annotation.
-
-```shell
-hisat2_extract_splice_sites.py gencode.v43.annotation.gtf > gencode.ss
-hisat2_extract_splice_sites.py gencode.v43.annotation.gtf > gencode.exons
-```
-
-Using the generated ***.exons*** and ***.ss*** files, a simple comparison between the number of lines can be made to identify the difference in the number of splice sites and exons.
-
-```shell
-wc -l file_name.exons
-wc -l file_name.ss
-```
-
-| Type | Exons | Splice sites |
-| ---- | ---- | ---- |
-| Prebuilt index | 308795 | 347295 |
-| Gencode v43 Primary assembly | 328613 | 402486 |
-
-Unique scaffolds/chromosomes with annotated exons from the two ***.exon*** files were identified and compared.
-
-```shell
-cat prebuilt.exons| cut -f 1 | cut -d " " -f 1 | sort -V | uniq > prebuilt_exons_scaffolds.txt
-
-cat gencode.exons | cut -f 1 | sed "s/chrM/MT/" | sed "s/chr//" |sort -V | uniq > gencode_exons_scaffolds.txt
-
-diff gencode_exons_scaffolds.txt prebuilt_exons_scaffolds.txt
-```
-
-There were 12 scaffolds present in the prebuilt index that were not found in the Gencode annotation.
+Unfortunately, the indexing of a human genome with transcript annotations required over 160GB of memory and could not be completed. Therefore, a prebuilt index used previously for a ScanB project was acquired and used. The index was created using hg38 assembly, gencode v41 annotation for the transcriptome annotation, and the dbSNP build 155 for the SNP data.
 
 #### 1.1.2. Alignment
 
-The reads from the polysome profiling were aligned to the GRCh38 Human Genome as the reference, using [HISAT2](http://daehwankimlab.github.io/hisat2/manual/). The reference [index](http://daehwankimlab.github.io/hisat2/download/#h-sapiens) provided by HISAT2. The max intron length was set at 2Mb (REFERENCE). The alignment output was directly piped into samtools to sort and convert them from SAM to BAM formats.
+The reads from the polysome profiling were aligned to the reference index, using [HISAT2](http://daehwankimlab.github.io/hisat2/manual/). The alignment output was directly piped into samtools to sort and convert them from SAM to BAM formats.
 
 ```shell
-cat files_list.txt | while read line;do file_dir=$(echo ../data/$line); file_name=$(echo $line | cut -d "/" -f 2); file_folder=$(echo $line | cut -d "/" -f 1); mate_1=$(echo ${file_dir}_R1_001.fastq.gz); mate_2=$(echo ${file_dir}_R2_001.fastq.gz); echo $file_name; hisat2 -p 15 -q --fr --new-summary --summary-file genome_tran/summary/$file_name.sam.summary --dta --rna-strandness RF --non-deterministic --max-intronlen 2000000 -x ../../reference/grch38_tran/genome_tran -1 $mate_1 -2 $mate2 | samtools sort -o genome_tran/$file_folder/$file_name.bam; done;
-```
-
-A different index file, with a more up-to-date transcript annotation and SNP data was obtained from ScanB and was used to generate a new set of alignments.
-
-```shell
-cat files_list.txt | while read line;do file_dir=$(echo ../data/$line); file_name=$(echo $line | cut -d "/" -f 2); file_folder=$(echo $line | cut -d "/" -f 1); mate_1=$(echo ${file_dir}_R1_001.fastq.gz); mate_2=$(echo ${file_dir}_R2_001.fastq.gz); echo $file_name; hisat2 -p 15 -q --fr --new-summary --summary-file genome_tran/summary/$file_name.sam.summary --dta --rna-strandness RF --non-deterministic --max-intronlen 2000000 -x ../../reference/grch38_tran/genome_tran -1 $mate_1 -2 $mate2 | samtools sort -o genome_tran/$file_folder/$file_name.bam; done;
+cat files_list.txt | while read line;do file_dir=$(echo ../data/$line); file_name=$(echo $line | cut -d "/" -f 2); file_folder=$(echo $line | cut -d "/" -f 1); mate_1=$(echo ${file_dir}_R1_001.fastq.gz); mate_2=$(echo ${file_dir}_R2_001.fastq.gz); echo $file_name; hisat2 -p 15 -q --fr --new-summary --summary-file 1_alignments/summary/$file_name.sam.summary --dta --rna-strandness RF --non-deterministic --max-intronlen 2000000 -x ../reference/hisat2/genome_snp_tran -1 $mate_1 -2 $mate2 | samtools sort -o 1_alignments/$file_folder/$file_name.bam; done;
 ```
 
 #### 1.1.3. Summary statistics from alignment
@@ -118,7 +80,7 @@ The script can be run in the directory with all of the subdirectories where the 
 prepDE.py3
 ```
 
-#### 1.1.5. Gene feature quantification with HTSeq
+#### 1.1.5. Read counts with HTSeq
 
 Because stringtie can only calculate hypothetical read counts instead of producing raw read counts, HTSeq, which is capable of producing raw counts, was used to quantify the trascripts once again, in order to compare the count values produced.
 
@@ -130,69 +92,48 @@ cat sample_list.txt | while read line; do sample_name=$(echo $line | cut -d "/" 
 
 #### 1.2.1. Building the index
 
-In order to build an index file for Novoalign with known transcripts and splice sites, the protocol outlined in the [Novoalign documentation](https://www.novocraft.com/documentation/novoalign-2/novoalign-user-guide/rnaseq-analysis-mrna-and-the-spliceosome/) was used.
-
-#### Preparing genome and transcript annotation files
-
-The included Novoindex software, for generating the index file for Novoalign to use as the reference while mapping, requires three input FASTA files:
-
-    1. Splice sites file
-    2. Transcripts file
-    3. Masked genome file (where genes are masked as Ns)
-
-To generate the first two, the **MakeTranscriptome** program from the **Useq** package is required. The following [documentation](https://useq.sourceforge.net/usageRNASeq.html) was used to generate the FASTA files.
-
-#### Prepare transcript annotation
-
-The Gencode v41 human genome annotation was downloaded from UCSC Ensembl Table Browser according to the instructions found in the documentation above.
+While Novoalign includes the protocol for generating an index with known transcripts, the protocol was extremely long and poorly documented. It was decided that the benefits of attempting to create an index with transcriptome annotation was not great enough to outweigh the time and resources it would require. Therefore, an index was created with only the genome assembly. The same GRCh38 genome assembly used for the HISAT2 index was used.
 
 ```shell
-# Uncompress annotation
-gunzip refFlat.txt.gz
+# Index is created
+novoindex ~/reference/novoalign/GRCh38_no_alt_maskedGRC.nix ~/reference/raw/GCA_000001405.15_GRCh38_no_alt_analysis_set_maskedGRC_exclusions_v2.fasta
 
-# Remove # from the header line using vim
-vim refFlat.txt
-
-# Preprocess annotation file to refFlat format
-java -jar ~/bin/useq/Apps/PrintSelectColumns -i 10,0,1,2,3,4,5,6,7,8,9 -f refFlat.txt
-
-# Rename file
-mv refFlat.PSC.xls refFlat.corr.txt
-
-# Remove _alt and _fix chromosomes
-cat refFlat.corr.txt | grep -v "_alt" | grep -v "_fix" > refFlat.corr.no.alt.txt
+# A soft link to the index was created in the directory where novoalign will be run
+ln -s ~/reference/novoalign/GRCh38_no_alt_maskedGRC.nix ~/ribosome/index_link.nix
 ```
 
-#### Split genome by chromosome
-
-The **MakeTranscriptome** software requires that the genome file is split by chromosomes so that there is a FASTA file for each chromosome. This was achieved by:
-
-    1. Creating a text file listing the individual chromosomes present in the genome file
-    2. Looping over the text file and grepping sequences with the headers
-    3. outputting the results to individual FASTA files
+In addition to the reference genome, another index was created for the complete human ribosomal DNA repeating units (U13369.1).
 
 ```shell
-# Generate text file with chromosomes
-cat genome_file.fasta.gz | gunzip | grep "^>" | tr -d ">" > ~/ribosome/novoalign/chromosomes.txt
+# Index is created
+novoindex ~/reference/novoalign/rRNA.nix ~/reference/raw/human_complete_rRNA.fasta
 
-# Convert multi-line FASTA to single-line FASTA
-zcat genome_file.fasta.gz | awk '{if(NR==9) {print $0} else {if($0 ~ /^>/) {print "\n"$0} else {printf $0}}}' > /raidset/eu3337ha-s/reference/novoalign/genome_singleline.fasta
-
-# Compress file
-gzip genome_singleline.fasta
-
-# Make a new folder to store the files
-mkdir /raidset/reference/novoalign/chromosomes
-
-# Use chromosomes file to generate individual FASTA files
-cat chromosomes.txt | while read line; do file_name=$(echo line | tr -d ">"); echo $file_name; zgrep -A1 ^>${line}$ > /raidset/reference/novoalign/chromosomes/$file_name.fasta; done;
+# A soft link to the index is created
+ln -s ~/reference/novoalign/rRNA.nix ~/ribosome/rRNA_link.nix
 ```
 
-#### Build transcriptome FASTAs
+#### 1.2.2. Alignment with Novoalign
 
-The FASTA files and the processed annotation files can now be used to generate the two transcriptome FASTA files. The ***splice junction radius*** was set to 72 after confirming that the read length for the Ribo-seq data was 76 nt.
+Novoalign was run using the index file created above. The alignment parameters were set to be extra sensitive compared to regular RNA seq alignments, due to the short read lengths of the RPFs. Novoalign also allows the clipping of adapter sequences that may be present in the 3' ends of the reads. Therefore, the adapter sequence used for the Ribo-seq procedure was provided to the aligner.
 
 ```shell
-java -jar ~/bin/useq/Apps/MakeTranscriptome -f ./chromosomes -u refFlat.corr.no.alt.txt -r 72
+ls data | while read file; do sample_name=$(echo $file | sed "s/.fastq.gz//"); echo $file; novoalign -c 15 -d index_link.nix -f data/$file -F STDFQ -a AGATCGGAAGAGCACACGTCT -l 17 -h -1 -1 -t 90 -g 50 -x 15 -o SAM -o FullNW -r All 51 -e 51 2> 1_alignments/novoalign/genome/$file.summary | samtools sort -o 1_alignments/novoalign/genome/$sample_name.bam; done;
 ```
 
+The ribosome dataset was aligned again to the rDNA repeats to determine the approximate levels of rRNA still remaining in the data. It was determined that while it is probably not necessary to remove such reads mapping as rRNA, it would still be beneficial to see how successful the rRNA depletion step was. '
+
+```shell
+ls data | while read file; do sample_name=$(echo $file | sed "s/.fastq.gz//"); echo $file; novoalign -c 15 -d rRNA_link.nix -f data/$file -F STDFQ -a AGATCGGAAGAGCACACGTCT -l 17 -h -1 -1 -t 90 -g 50 -x 15 -o SAM -o FullNW -r All 51 -e 51 2> 1_alignments/novoalign/rRNA/$file.summary | samtools sort -o 1_alignments/novoalign/rRNA/$sample_name.bam; done;
+```
+
+#### 1.2.3. Alignment with HISAT2
+
+Another set of alignments were produced using HISAT2 in order to compare the two mapping softwares. It was believed that Novoalign would be better for the alignment of the ribo-seq dataset due to the short read lengths.
+
+#### Trimming
+
+Before the alignment could be performed, the adapter sequences were trimmed as HISAT2 is not capable of adapter trimming on its own, unlike Novoalign.
+
+```shell
+ls data | while read file; do sample_name=$(echo $file|sed "s/.1.fastq.gz//"); echo $file; trimmomatic SE -threads 15 -phred33 -summary 0_trimming/$sample_name.trim.summary data/$file 0_trimming/$sample_name.trimmed.fastq ILLUMINACLIP:$HOME/bin/miniconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic-0.39-2/adapters/TruSeq3-SE.fa:2:30:10 SLIDINGWINDOW:5:20; done;
+```
