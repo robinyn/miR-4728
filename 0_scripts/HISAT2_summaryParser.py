@@ -7,8 +7,6 @@
 
 import argparse
 import os.path
-import itertools
-
 
 def init_args():
     # The argument parser is created and the arguments the user can/must provide are defined
