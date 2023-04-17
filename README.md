@@ -135,5 +135,20 @@ Another set of alignments were produced using HISAT2 in order to compare the two
 Before the alignment could be performed, the adapter sequences were trimmed as HISAT2 is not capable of adapter trimming on its own, unlike Novoalign.
 
 ```shell
-ls data | while read file; do sample_name=$(echo $file|sed "s/.1.fastq.gz//"); echo $file; trimmomatic SE -threads 15 -phred33 -summary 0_trimming/$sample_name.trim.summary data/$file 0_trimming/$sample_name.trimmed.fastq ILLUMINACLIP:$HOME/bin/miniconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic-0.39-2/adapters/TruSeq3-SE.fa:2:30:10 SLIDINGWINDOW:5:20; done;
+ls data | while read file; do sample_name=$(echo $file|sed "s/.1.fastq.gz//"); echo $file; trimmomatic SE -threads 15 -phred33 -summary 0_trimming/$sample_name.trim.summary data/$file 0_trimming/$sample_name.trimmed.fastq ILLUMINACLIP:$HOME/bin/miniconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic-0.39-2/adapters/TruSeq3-SE.fa:2:30:10 SLIDINGWINDOW:4:25 MINLEN 17; done;
 ```
+
+The trimmed sequences were passed to FastQC to evaluate the trimming results.
+
+```shell
+ls 0_trimming/ | grep -v ".summary" | while read file; do echo $file; fastqc -o 0_fastqc/trimmed/ --noextract 0_trimming/$file; done;
+```
+
+#### Alignment
+
+The trimmed sequences were then aligned to the reference genome.
+
+```shell
+ls data | while read file; do sample_name=$(echo $file | sed "s/.1.fastq.gz//"); echo $file; hisat2 -p 15 -q --phred33 --new-summary --summary-file 1_alignments/hisat2/summary/$sample_name.sam.summary --dta --rna-strandness R --non-deterministic --max-intronlen 2000000 -x ../reference/hisat2/genome_snp_tran -U data/$file | samtools sort -o 1_alignments/hisat2/$file_folder/$sample_name.bam; done;
+```
+
