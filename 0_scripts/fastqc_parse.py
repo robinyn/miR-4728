@@ -48,35 +48,45 @@ def generate_summary(input_file):
                     report_dir = os.path.expanduser(report_dir)
 
                 with open(report_dir, "r") as report_file:
+                    print(report_dir)
                     for line in report_file:
                         if line.startswith("Filename"):
                             sample_name = line.strip().split("\t")[1]
 
                         if line.startswith("Total Sequences"):
                             total_read_count = int(line.strip().split("\t")[1])
-                            next
+                            continue
 
                         if line.startswith("Sequence length"):
-                            min_read_length = int(line.strip().split("\t")[1].split("-")[0])
-                            max_read_length = int(line.strip().split("\t")[1].split("-")[1])
-                            next
+                            if len(line.strip().split("\t")[1].split("-"))>1:
+                                min_read_length = int(line.strip().split("\t")[1].split("-")[0])
+                                max_read_length = int(line.strip().split("\t")[1].split("-")[1])
+                            else:
+                                min_read_length = int(line.strip().split("\t")[1].split("-")[0])
+                                max_read_length = min_read_length
+                                mean_read_length = max_read_length
+                            continue
 
                         if line.startswith("%GC"):
                             gc_content = int(line.strip().split("\t")[1])
-                            next
+                            continue
 
-                        if line.startswith("#length"):
+                        if line.startswith("#Length"):
                             length_module = True
-                            next
+                            continue
+
+                        if (min_read_length == max_read_length) and not (max_read_length == 0):
+                            break
 
                         if length_module and not line.startswith(">>END_MODULE"):
-                            cur_len = int(line.strip().split("\t"[0]))
-                            len_count = float(line.strip().split("\t"[1]))
+                            cur_len = int(line.strip().split("\t")[0])
+                            len_count = float(line.strip().split("\t")[1])
 
                             len_sum += cur_len * len_count
-                            next
+                            continue
                         elif length_module and line.startswith(">>END_MODULE"):
                             length_module = False
+
                             mean_read_length = len_sum / total_read_count
                             break
                 summary_list.append([sample_name, str(total_read_count), str(gc_content), str(min_read_length), str(max_read_length), str(mean_read_length)])
