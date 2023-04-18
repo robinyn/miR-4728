@@ -85,7 +85,7 @@ prepDE.py3
 Because stringtie can only calculate hypothetical read counts instead of producing raw read counts, HTSeq, which is capable of producing raw counts, was used to quantify the trascripts once again, in order to compare the count values produced.
 
 ```shell
-cat sample_list.txt | while read line; do sample_name=$(echo $line | cut -d "/" -f 1); echo $line; htseq-count -f bam -r pos -s reverse -t exon -m intersection-nonempty  --nonunique=none --addtional-attr=gene_name HISAT2/genome_scanb/$line.bam /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf > htseq/$sample_name.count; done;
+files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r pos -s reverse -t exon -m union $files ../reference/raw/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf
 ```
 
 ### 1.2. Ribosome profiling data
@@ -150,5 +150,13 @@ The trimmed sequences were then aligned to the reference genome.
 
 ```shell
 ls data | while read file; do sample_name=$(echo $file | sed "s/.1.fastq.gz//"); echo $file; hisat2 -p 15 -q --phred33 --new-summary --summary-file 1_alignments/hisat2/summary/$sample_name.sam.summary --dta --rna-strandness R --non-deterministic --max-intronlen 2000000 -x ../reference/hisat2/genome_snp_tran -U data/$file | samtools sort -o 1_alignments/hisat2/$file_folder/$sample_name.bam; done;
+```
+
+***NOTE***: The alignments with HISAT2 were extremely poor (<1% alignment).
+
+#### 1.2.4. Read counts with HTSeq
+
+```shell
+files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r pos -s reverse -t exon -m union $files ../reference/raw/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf
 ```
 
