@@ -5,10 +5,11 @@ library(ggplot2)
 library(anota2seq)
 library(DESeq2)
 
-setwd("~/Desktop")
+setwd("~/Dev/mir-4728/3_counts/")
 
+# ======================== POLYSOME ========================
 # Import raw data
-raw_dat = read.csv("gene_count.matrix", sep="\t")
+raw_dat = read.csv("polysome_gene_counts.txt", sep="\t")
 sample_names = c("SK0001","SK0002","SK0003","SK0004","SK0005","SK0006","SK0007","SK0008","SK0009","SK0010",
                  "SK0011","SK0012","SK0013","SK0014","SK0015","SK0016","SK0017","SK0018")
 
@@ -25,6 +26,21 @@ sample_anot = data.frame(sample = sample_names,
                          condition = c(rep(c("control","control","control", "treatment", "treatment", "treatment"), 3)),
                          replicate = c(rep(c(1,2,3), 6))) %>% 
   column_to_rownames("sample")
+
+# ======================== RIBOSOME ========================
+
+# ===========================================================
+# Select fraction
+frac_sel = "polysome"
+
+# PCA PC values
+# Polysome
+x_names = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", 
+            "PC10", "PC11", "PC12", "PC13", "PC14", "PC15", "PC16", "PC17", "PC18")
+# Ribosome
+#x_names = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", 
+#            "PC10", "PC11", "PC12")
+# ===========================================================
 
 # Quality control
 
@@ -56,9 +72,6 @@ PCA_obj_Trans = t(PCA_obj_filt)
 PCA_out = prcomp(PCA_obj_Trans)
 
 # Visualize PCA
-x_names = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", 
-                            "PC10", "PC11", "PC12", "PC13", "PC14", "PC15", "PC16", "PC17", "PC18")
-
 prop_Var = ggplot(data = NULL) +
   geom_bar(stat = "identity", aes(x=names(summary(PCA_out)$importance[2,]), 
                                   y=summary(PCA_out)$importance[2,])) + 
@@ -94,14 +107,14 @@ print(PC1vPC3)
 
 # Prep data for anota2seq
 polysome_dat = dat %>% 
-  select(row.names(sample_anot[sample_anot$fraction=="polysome",])) %>% 
+  dplyr::select(row.names(sample_anot[sample_anot$fraction==frac_sel,])) %>% 
   as.matrix()
 
 total_dat = dat %>% 
-  select(row.names(sample_anot[sample_anot$fraction=="total",])) %>% 
+  dplyr::select(row.names(sample_anot[sample_anot$fraction=="total",])) %>% 
   as.matrix()
 
-pheno_vec = sample_anot[sample_anot$fraction=="polysome", "condition"]
+pheno_vec = sample_anot[sample_anot$fraction==frac_sel, "condition"]
 
 # Generate anota2seq dataset
 ads = anota2seqDataSetFromMatrix(
@@ -111,7 +124,7 @@ ads = anota2seqDataSetFromMatrix(
   dataType = "RNAseq",
   normalize = TRUE,
   transformation = "TMM-log2",
-  filterZeroGenes = FALSE
+  filterZeroGenes = TRUE
 )
 
 # Perform QC
