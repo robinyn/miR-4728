@@ -18,6 +18,12 @@ The following tools were not available through Conda and were installed manually
 - HISAT2 (v2.2.1)
 - Novoalign (v)
 
+The following R packages are required:
+- anota2seq
+- clusterProfiler
+- annotationdbi
+
+
 ## 0. Quality control
 
 Both datasets were tested using FastQC to ensure that all sample files were suitable for use in downstream analyses.
@@ -61,32 +67,6 @@ ls summary_files | while read file; do echo summary_files/$file; done > sample_l
 ```
 
 A custom Python script was used to parse the summary files with the list and visualized using R. The two sets of alignments, with the prebuilt and scanb index, were compared. No significant differences were identified, therefore the alignment with the most up-to-date reference index was used for the subsequent analyses.
-
-#### 1.1.4. Read counts with Stringtie
-
-While it is possible to assemble the transcripts from the alignments to produce a new annotation GTF file and detecting novel transcripts, this is not necessary for this project as we are only interested in the differential expression and translation of known genes between the control and case groups. Therefore, Stringtie was used directly with the original Gencode annotation file as the reference to produce read counts.
-
-```shell
-cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assmebly.annotation.ucsc.filtered.gtf -e -B -A stringtie/counts/${line}_gene_abund.tab -o stringtie/counts/$line.gtf HISAT2/genome_scanb/$line.bam; done;
-```
-
-Since Stringtie can only produce FPKM and TPM values, a Python script (prepDE.py3) provided in the Stringtie package was used to calculate hypothetical read counts using the following formula:
-
-Hypothetical read count = Coverage * Transcript length / Read length
-
-The script can be run in the directory with all of the subdirectories where the GTF files resulting from the last step are stored. In this case "stringtie/counts" directory.
-
-```shell
-prepDE.py3
-```
-
-#### 1.1.5. Read counts with HTSeq
-
-Because stringtie can only calculate hypothetical read counts instead of producing raw read counts, HTSeq, which is capable of producing raw counts, was used to quantify the trascripts once again, in order to compare the count values produced.
-
-```shell
-files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r pos -s reverse -t exon -m union $files ../reference/raw/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf
-```
 
 ### 1.2. Ribosome profiling data
 
@@ -154,9 +134,55 @@ ls data | while read file; do sample_name=$(echo $file | sed "s/.1.fastq.gz//");
 
 ***NOTE***: The alignments with HISAT2 were extremely poor (<1% alignment).
 
-#### 1.2.4. Read counts with HTSeq
+## 2. Gene counts
+
+### 2.1. Polysome data
+
+#### 2.1.1. Read counts of polysome data with Stringtie
+
+While it is possible to assemble the transcripts from the alignments to produce a new annotation GTF file and detecting novel transcripts, this is not necessary for this project as we are only interested in the differential expression and translation of known genes between the control and case groups. Therefore, Stringtie was used directly with the original Gencode annotation file as the reference to produce read counts.
 
 ```shell
-files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r pos -s reverse -t exon -m union $files ../reference/raw/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf
+cat sample_list.txt | while read line; do echo $line; stringtie -G /raidset/reference/scanb/hg38.giab_gencode41_snp155/processed/gencode.v41.primary_assmebly.annotation.ucsc.filtered.gtf -e -B -A stringtie/counts/${line}_gene_abund.tab -o stringtie/counts/$line.gtf HISAT2/genome_scanb/$line.bam; done;
 ```
+
+Since Stringtie can only produce FPKM and TPM values, a Python script (prepDE.py3) provided in the Stringtie package was used to calculate hypothetical read counts using the following formula:
+
+Hypothetical read count = Coverage * Transcript length / Read length
+
+The script can be run in the directory with all of the subdirectories where the GTF files resulting from the last step are stored. In this case "stringtie/counts" directory.
+
+```shell
+prepDE.py3
+```
+
+#### 2.1.1. Read counts of polysome data with HTSeq
+
+Because stringtie can only calculate hypothetical read counts instead of producing raw read counts, HTSeq, which is capable of producing raw counts, was used to quantify the trascripts once again, in order to compare the count values produced.
+
+```shell
+files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r pos -s reverse -t exon -m intersection-strict --nonunique=all $files ../reference/raw/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf
+```
+
+### 2.2. Ribosome data
+
+#### 2.2.1. Read counts of ribosome data with HTSeq
+
+```shell
+files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r pos -s reverse -t exon -m intersection-strict --nonunique=all $files ../reference/raw/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf
+```
+
+## 3. Differential expression analysis
+
+### 3.1. Polysome data
+
+The R package Anota2seq was used for the differential expression analysis of the polysome data, generating log2FC values for the total mRNA and translated (polysome associated) mRNA.
+
+### 3.2. Ribosome data
+
+Anota2seq could not be used for the analysis of the Ribo-seq data, as it requires at least 3 replicates per condition and one of the samples was removed due to a significantly low total number of reads. Therefore, similar analysis packages: Xtail and DESeq2 were used.
+
+## 4. Gene set enrichment analysis (GSEA)
+
+The R package clusterProfiler was used.
 
