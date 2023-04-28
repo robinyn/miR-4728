@@ -5,11 +5,11 @@ library(ggplot2)
 library(anota2seq)
 library(DESeq2)
 
-setwd("~/Dev/mir-4728/3_counts/")
+setwd("~/Dev/mir-4728")
 
 # ======================== POLYSOME ========================
 # Import raw data
-raw_dat = read.csv("polysome_gene_counts.txt", sep="\t")
+raw_dat = read.csv("3_counts/polysome_gene_counts.txt", sep="\t")
 sample_names = c("SK0001","SK0002","SK0003","SK0004","SK0005","SK0006","SK0007","SK0008","SK0009","SK0010",
                  "SK0011","SK0012","SK0013","SK0014","SK0015","SK0016","SK0017","SK0018")
 
@@ -17,6 +17,9 @@ colnames(raw_dat) = c("GeneID",sample_names)
 
 dat = raw_dat %>% 
   column_to_rownames("GeneID")
+
+dat = dat %>%
+  filter(!grepl("__", rownames(dat)))
 
 # Generate sample annotation
 sample_anot = data.frame(sample = sample_names, 
@@ -37,6 +40,9 @@ frac_sel = "polysome"
 # Polysome
 x_names = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", 
             "PC10", "PC11", "PC12", "PC13", "PC14", "PC15", "PC16", "PC17", "PC18")
+
+#x_names = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", 
+#            "PC10", "PC11", "PC12")
 # Ribosome
 #x_names = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", 
 #            "PC10", "PC11", "PC12")
@@ -46,6 +52,11 @@ x_names = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9",
 
 # Create a PCA object 
 PCA_obj = as.matrix(dat)
+
+# PCA_obj = dat %>% 
+#   dplyr::select(1:12) 
+# 
+# PCA_obj = as.matrix(PCA_obj)
 
 # Remove zeros
 PCA_obj = PCA_obj[!apply(PCA_obj, 1, function(x)any(x==0)),]
@@ -163,4 +174,7 @@ ads = anota2seqRegModes(ads)
 anota2seqPlotFC(ads, selContrast = 1, plotToFile = FALSE)
 
 # Get output
-results_table = anota2seqGetOutput(ads, output = "singleDf", selContrast = 1)
+#results_table = anota2seqGetOutput(ads, output = "singleDf", selContrast = 1)
+
+# Save ads
+#save(ads, file="4_DE/polysome/polysome_anota2seq.robj")
