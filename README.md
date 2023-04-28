@@ -178,11 +178,15 @@ files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r 
 
 The R package Anota2seq was used for the differential expression analysis of the polysome data, generating log2FC values for the total mRNA and translated (polysome associated) mRNA.
 
+In order to make the polysome data comparable to the ribosome data, the analysis was conducted again using DESeq2.
+
 ### 3.2. Ribosome data
 
-Anota2seq could not be used for the analysis of the Ribo-seq data, as it requires at least 3 replicates per condition and one of the samples was removed due to a significantly low total number of reads. Therefore, similar analysis packages: Xtail and DESeq2 were used.
+Anota2seq could not be used for the analysis of the Ribo-seq data, as it requires at least 3 replicates per condition and one of the samples was removed due to a significantly low total number of reads. Therefore, a similar analysis package, DESeq2, was used.
 
 ## 4. Gene set enrichment analysis (GSEA)
 
-The R package clusterProfiler was used.
+The R package clusterProfiler was used to carry out a GSEA against genesets from KEGG and Gene Ontology, as well as transcription factor target genes, predicted targets for miR-4728-3p/miR-21-5p, genes with 5'TOP sites and genes with internal ribosomal entry sites (IRES).
+
+
 
