@@ -1,8 +1,8 @@
 library(RColorBrewer)
 library(stringr)
 
-transcription_enrichment = enrichment_reactome_transcription@result
-translation_enrichment = enrichment_reactome_translation@result
+transcription_enrichment = enrichment_KEGG_transcription@result
+translation_enrichment = enrichment_KEGG_translation@result
 
 # Order by padj
 transcription_enrichment = transcription_enrichment[order(transcription_enrichment$p.adjust),]

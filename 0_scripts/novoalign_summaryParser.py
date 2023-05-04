@@ -10,8 +10,8 @@ import os.path
 
 def init_args():
     # The argument parser is created and the arguments the user can/must provide are defined
-    parser = argparse.ArgumentParser(prog = "HISAT2 Summary Parser", \
-                                     description="Script to parse multiple alignment summary files from HISAT2 into one TSV file. Currently only works with paired reads.")
+    parser = argparse.ArgumentParser(prog = "Novoalign Summary Parser", \
+                                     description="Script to parse multiple alignment summary files from Novoalign into one TSV file.")
     parser.add_argument('-i', '--input', default="input.txt", nargs="?", \
                         help="Directory and name of the input file. A text (.txt) file with a single file on each line should be used for multiple files. (Default = input.sam.summary)")
     parser.add_argument('-o', '--output', default="parsed_output.tsv", nargs="?", \
