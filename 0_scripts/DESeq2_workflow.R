@@ -3,6 +3,7 @@ library(edgeR)
 library(limma)
 library(ggplot2)
 library(tidyverse)
+library(stringr)
 
 setwd("~/Dev/mir-4728/3_counts/")
 
@@ -13,6 +14,9 @@ sample_names = c("SK0001","SK0002","SK0003","SK0004","SK0005","SK0006","SK0007",
                  "SK0011","SK0012","SK0013","SK0014","SK0015","SK0016","SK0017","SK0018")
 
 colnames(raw_dat) = c("GeneID",sample_names)
+
+raw_dat$GeneID = raw_dat$GeneID %>% 
+  str_remove("\\.[0-9]*$")
 
 dat = raw_dat %>% 
   column_to_rownames("GeneID") %>% 
