@@ -169,7 +169,7 @@ files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r 
 #### 2.2.1. Read counts of ribosome data with HTSeq
 
 ```shell
-files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r pos -s reverse -t exon -m intersection-strict --nonunique=all $files ../reference/raw/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf
+files=$(cat alignments_file.txt | awk '{print}' ORS=" "); htseq-count -f bam -r pos -s no -t exon -m intersection-strict --nonunique=all $files ../reference/raw/gencode.v41.primary_assembly.annotation.ucsc.filtered.gtf > gene_counts_no.txt
 ```
 
 ## 3. Differential expression analysis
