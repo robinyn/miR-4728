@@ -8,20 +8,20 @@ The data for this project consists of ribosome and polysome profiling data for S
 
 A conda environment was created for this analysis and the environment file is attached.
 
-- samtools (v)
-- gfftools (v)
-- htseq (v)
-- fastqc (v)
+- samtools (v1.6)
+- htseq (v2.0.2)
+- fastqc (v0.12.1)
+- trimmomatic (v0.39)
 
 The following tools were not available through Conda and were installed manually following the installation steps provided in their respective documentations:
 
 - HISAT2 (v2.2.1)
-- Novoalign (v)
+- Novoalign (v4.03.07)
 
 The following R packages are required:
-- anota2seq
-- clusterProfiler
-- annotationdbi
+- anota2seq (v1.20.0)
+- clusterProfiler (v4.6.2)
+- DESeq2 (v1.38.3)
 
 
 ## 0. Quality control

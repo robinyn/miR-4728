@@ -4,7 +4,17 @@ library(stringr)
 
 setwd("~/Dev/mir-4728")
 
-dat = read.csv("2_alignments/parsed_output.tsv", sep="\t")
+genome_align = read.csv("2_alignments/ribosome_novoalign/novoalign_ribosome_genome_results.tsv", sep="\t")
+rRNA_align = read.csv("2_alignments/ribosome_novoalign/novoalign_ribosome_rRNA_results.tsv", sep="\t")
+
+genome_align = genome_align %>% 
+  mutate(alignment_rate = ((tot_seq_count - no_count)/tot_seq_count)*100)
+
+rRNA_align = rRNA_align %>% 
+  mutate(alignment_rate = ((tot_seq_count - no_count)/tot_seq_count)*100)
+
+dat = genome_align %>% 
+  dplyr::select(!alignment_rate)
 
 subset_dat = dat %>% 
   pivot_longer(!sampleID, names_to = "type", values_to = "values") %>% 

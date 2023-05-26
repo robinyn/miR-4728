@@ -1,15 +1,33 @@
 library(RColorBrewer)
 library(stringr)
+library(tidyverse)
 
-transcription_enrichment = enrichment_KEGG_transcription@result
-translation_enrichment = enrichment_KEGG_translation@result
+setwd("~/Dev/mir-4728/5_GSEA/results/DESeq2")
+
+transcription = read_tsv("~/Dev/mir-4728/5_GSEA/results/DESeq2/ribosome/tables/enrichment_GO_BP_transcription.tsv")
+translation = read_tsv("~/Dev/mir-4728/5_GSEA/results/DESeq2/ribosome/tables/enrichment_GO_BP_translation.tsv")
+
+# transcription = enrichment_GO_BP_transcription
+# translation = enrichment_GO_BP_translation
+
+transcription_enrichment = transcription %>% 
+  dplyr::select(Description, enrichmentScore, p.adjust) %>% 
+  filter(p.adjust <0.05)
+translation_enrichment = translation %>% 
+  dplyr::select(Description, enrichmentScore, p.adjust) %>% 
+  filter(p.adjust <0.05)
 
 # Order by padj
 transcription_enrichment = transcription_enrichment[order(transcription_enrichment$p.adjust),]
 translation_enrichment = translation_enrichment[order(translation_enrichment$p.adjust),]
 
+# Order by enrichment score
+# transcription_enrichment = transcription_enrichment[order(transcription_enrichment$enrichmentScore),]
+# translation_enrichment = translation_enrichment[order(translation_enrichment$enrichmentScore),]
+
 # Remove cutoff
 cutoff=25
+
 plot_data_transcription = transcription_enrichment[1:cutoff,] %>% 
   drop_na()
 
@@ -32,9 +50,9 @@ plot_data = plot_data_transcription %>%
 
 p = ggplot() +
   geom_bar(data=plot_data, aes(x=enrichmentScore, y=Description, fill=p.adjust), stat="identity") +
-  scale_fill_gradient(low="red", high="blue") +
+  scale_fill_gradient(low="royalblue2", high="grey") +
   scale_y_discrete(limits=rev, labels=function(x) str_wrap(x, 60)) +
-  scale_x_continuous(limits=c(-0.8, 0.8)) +
+  scale_x_continuous(limits=c(-1, 1)) +
   labs(x="Enrichment score", y="Pathways") +
   facet_wrap(vars(type))
 

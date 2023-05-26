@@ -6,27 +6,19 @@ library(tidyverse)
 library(msigdbr)
 
 # load("~/Dev/mir-4728/4_DE/polysome/polysome_anota2seq.robj")
-setwd("~/Dev/mir-4728/5_GSEA")
+setwd("~/Dev/mir-4728/5_GSEA/results/DESeq2/ribosome/tables")
 
-# fcTable_transcription = anota2seqGetDeltaData(ads, "full", analysis="total mRNA", selContrast = 1) %>% 
-#   as.data.frame() %>% 
-#   rownames_to_column("geneID")
-# 
-# fcTable_transcription$geneID = fcTable_transcription$geneID %>% 
-#   str_remove("\\.[0-9]*$")
-# 
-# fcTable_translation = anota2seqGetDeltaData(ads, "full", analysis="translation", selContrast = 1) %>% 
-#   as.data.frame() %>% 
-#   rownames_to_column("geneID")
-# 
-# fcTable_translation$geneID = fcTable_translation$geneID %>% 
-#   str_remove("\\.[0-9]*$")
+polysome = read_tsv("~/Dev/mir-4728/4_DE/polysome/polysome_DESeq.txt")
+ribosome = read_tsv("~/Dev/mir-4728/4_DE/ribosome/ribosome_DESeq.txt")
+monosome = read_tsv("~/Dev/mir-4728/4_DE/monosome/monosome_DESeq.txt")
 
-fcTable_transcription = plot_table %>% 
-  dplyr::select(geneID, transcription_fc)
+plot_table = ribosome 
 
+fcTable_transcription = plot_table %>%
+  dplyr::select(geneID, totalRNA_lfc)
+  
 fcTable_translation = plot_table %>% 
-  dplyr::select(geneID, translation_fc)
+  dplyr::select(geneID, TE_lfc)
 
 # ========================================== Transcription =================================================
 fcTable = fcTable_transcription
@@ -39,29 +31,16 @@ geneList = sort(geneList, decreasing=TRUE)
 
 # miRNA target sites 
 
+
 enrichment_miRNA_transcription = GSEA(geneList = geneList,
                                       TERM2GENE = miRNA_targetsGS,
-                                      pvalueCutoff = 0.05,
-                                      minGSSize = 1,
-                                      maxGSSize = 100000) 
+                                      pvalueCutoff = 1) 
 
-# IRES
-
-enrichment_IRES_transcription= GSEA(geneList=geneList,
-                                    TERM2GENE=IRES_genes,
-                                    pvalueCutoff = 0.05)
-
-# 5'TOP
-
-enrichment_TOP_transcription = GSEA(geneList=geneList,
-                                    TERM2GENE=TOP_genes,
-                                    pvalueCutoff = 0.05)
-
-# miRNA target / IRES / 5'TOP
+# IRES / 5'TOP
 
 enrichment_custom_transcription = GSEA(geneList=geneList,
                                        TERM2GENE=custom_gs,
-                                       pvalueCutoff = 0.05)
+                                       pvalueCutoff = 1)
 
 # REACTOME
 
@@ -70,7 +49,7 @@ geneset = msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:R
 
 enrichment_reactome_transcription = GSEA(geneList = geneList,
                                          TERM2GENE = geneset,
-                                         pvalueCutoff = 0.05)
+                                         pvalueCutoff = 1)
 
 # GO:BP
 
@@ -79,7 +58,7 @@ geneset = msigdbr(species = "Homo sapiens", category = "C5", subcategory = "BP")
 
 enrichment_GO_BP_transcription = GSEA(geneList = geneList,
                                       TERM2GENE = geneset,
-                                      pvalueCutoff = 0.05)
+                                      pvalueCutoff = 1)
 
 # GO:MF
 
@@ -88,7 +67,7 @@ geneset = msigdbr(species = "Homo sapiens", category = "C5", subcategory = "MF")
 
 enrichment_GO_MF_transcription = GSEA(geneList = geneList,
                                       TERM2GENE = geneset,
-                                      pvalueCutoff = 0.05)
+                                      pvalueCutoff = 1)
 
 # GO:CC
 
@@ -97,7 +76,7 @@ geneset = msigdbr(species = "Homo sapiens", category = "C5", subcategory = "CC")
 
 enrichment_GO_CC_transcription = GSEA(geneList = geneList,
                                       TERM2GENE = geneset,
-                                      pvalueCutoff = 0.05)
+                                      pvalueCutoff = 1)
 
 # Transcription factor targets
 
@@ -107,7 +86,27 @@ geneset = msigdbr::msigdbr() %>%
 
 enrichment_TFT_transcription = GSEA(geneList = geneList,
                                     TERM2GENE = geneset,
-                                    pvalueCutoff = 0.05)
+                                    pvalueCutoff = 1)
+
+# HALLMARK
+
+geneset = msigdbr::msigdbr() %>% 
+  filter(gs_cat == "H") %>% 
+  dplyr::select(c(gs_name, ensembl_gene))
+
+enrichment_hallmark_transcription = GSEA(geneList = geneList,
+                                    TERM2GENE = geneset,
+                                    pvalueCutoff = 1)
+
+# Unibind TFT
+
+geneset = unibind_genes
+
+enrichment_unibind_transcription = GSEA(geneList = geneList,
+                                        TERM2GENE = geneset,
+                                        pvalueCutoff = 1)
+
+# KEGG
 
 KEGG_fcTable = fcTable
 
@@ -121,8 +120,7 @@ geneList = sort(geneList, decreasing=TRUE)
 
 enrichment_KEGG_transcription <- gseKEGG(geneList = geneList,
                                          organism = 'hsa',
-                                         minGSSize = 120,
-                                         pvalueCutoff = 0.05,
+                                         pvalueCutoff = 1,
                                          verbose = FALSE)
 
 enrichment_reactome_transcription@result$Description = enrichment_reactome_transcription@result$Description %>%
@@ -141,6 +139,10 @@ enrichment_GO_CC_transcription@result$Description = enrichment_GO_CC_transcripti
   str_replace_all("_", " ") %>%
   str_remove_all("GOCC ")
 
+enrichment_hallmark_transcription@result$Description = enrichment_hallmark_transcription@result$Description %>%
+  str_replace_all("_", " ") %>%
+  str_remove_all("HALLMARK ")
+
 enrichment_TFT_transcription@result$Description = enrichment_TFT_transcription@result$Description %>% 
   str_replace_all("_", " ")
 
@@ -157,27 +159,13 @@ geneList = sort(geneList, decreasing=TRUE)
 
 enrichment_miRNA_translation = GSEA(geneList = geneList,
                                     TERM2GENE = miRNA_targetsGS,
-                                    pvalueCutoff = 0.05,
-                                    minGSSize = 1,
-                                    maxGSSize = 100000) 
+                                    pvalueCutoff = 1) 
 
-# IRES
-
-enrichment_IRES_translation = GSEA(geneList=geneList,
-                                   TERM2GENE=IRES_genes,
-                                   pvalueCutoff = 0.05)
-
-# 5'TOP
-
-enrichment_TOP_translation = GSEA(geneList=geneList,
-                                  TERM2GENE=TOP_genes,
-                                  pvalueCutoff = 0.05)
-
-# miRNA target / IRES / 5'TOP
+# IRES / 5'TOP
 
 enrichment_custom_translation = GSEA(geneList=geneList,
                                      TERM2GENE=custom_gs,
-                                     pvalueCutoff = 0.05)
+                                     pvalueCutoff = 1)
 
 # REACTOME
 
@@ -186,7 +174,7 @@ geneset = msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:R
 
 enrichment_reactome_translation = GSEA(geneList = geneList,
                                        TERM2GENE = geneset,
-                                       pvalueCutoff = 0.05)
+                                       pvalueCutoff = 1)
 
 # GO:BP
 
@@ -195,7 +183,7 @@ geneset = msigdbr(species = "Homo sapiens", category = "C5", subcategory = "BP")
 
 enrichment_GO_BP_translation = GSEA(geneList = geneList,
                                     TERM2GENE = geneset,
-                                    pvalueCutoff = 0.05)
+                                    pvalueCutoff = 1)
 
 # GO:MF
 
@@ -204,7 +192,7 @@ geneset = msigdbr(species = "Homo sapiens", category = "C5", subcategory = "MF")
 
 enrichment_GO_MF_translation = GSEA(geneList = geneList,
                                     TERM2GENE = geneset,
-                                    pvalueCutoff = 0.05)
+                                    pvalueCutoff = 1)
 
 # GO:CC
 
@@ -213,7 +201,7 @@ geneset = msigdbr(species = "Homo sapiens", category = "C5", subcategory = "CC")
 
 enrichment_GO_CC_translation = GSEA(geneList = geneList,
                                     TERM2GENE = geneset,
-                                    pvalueCutoff = 0.05)
+                                    pvalueCutoff = 1)
 
 # Transcription factor targets
 
@@ -223,7 +211,27 @@ geneset = msigdbr::msigdbr() %>%
 
 enrichment_TFT_translation = GSEA(geneList = geneList,
                                   TERM2GENE = geneset,
-                                  pvalueCutoff = 0.05)
+                                  pvalueCutoff = 1)
+
+# HALLMARK
+
+geneset = msigdbr::msigdbr() %>% 
+  filter(gs_cat == "H") %>% 
+  dplyr::select(c(gs_name, ensembl_gene))
+
+enrichment_hallmark_translation = GSEA(geneList = geneList,
+                                         TERM2GENE = geneset,
+                                         pvalueCutoff = 1)
+
+# Unibind TFT
+
+geneset = unibind_genes
+
+enrichment_unibind_translation = GSEA(geneList = geneList,
+                                        TERM2GENE = geneset,
+                                        pvalueCutoff = 1)
+
+# KEGG
 
 KEGG_fcTable = fcTable
 
@@ -237,8 +245,7 @@ geneList = sort(geneList, decreasing=TRUE)
 
 enrichment_KEGG_translation <- gseKEGG(geneList = geneList,
                                        organism = 'hsa',
-                                       minGSSize = 120,
-                                       pvalueCutoff = 0.05,
+                                       pvalueCutoff = 1,
                                        verbose = FALSE)
 
 enrichment_reactome_translation@result$Description = enrichment_reactome_translation@result$Description %>%
@@ -257,13 +264,36 @@ enrichment_GO_CC_translation@result$Description = enrichment_GO_CC_translation@r
   str_replace_all("_", " ") %>%
   str_remove_all("GOCC ")
 
+enrichment_hallmark_translation@result$Description = enrichment_hallmark_translation@result$Description %>%
+  str_replace_all("_", " ") %>%
+  str_remove_all("HALLMARK ")
+
 enrichment_TFT_translation@result$Description = enrichment_TFT_translation@result$Description %>% 
   str_replace_all("_", " ")
 
-#write.table(enrichment_KEGG_translation, sep="\t", file="enrichment_KEGG_translation.tsv", row.names=FALSE, quote=FALSE)
-#write.table(enrichment_reactome_translation, sep="\t", file="enrichment_reactome_translation.tsv", row.names=FALSE, quote=FALSE)
-#write.table(enrichment_GO_BP_translation, sep="\t", file="enrichment_GO_BP_translation.tsv", row.names=FALSE, quote=FALSE)
-#write.table(enrichment_GO_MF_translation, sep="\t", file="enrichment_GO_MF_translation.tsv", row.names=FALSE, quote=FALSE)
-#write.table(enrichment_GO_CC_translation, sep="\t", file="enrichment_GO_CC_translation.tsv", row.names=FALSE, quote=FALSE)
-#write.table(enrichment_TFT_translation, sep="\t", file="enrichment_TFT_translation.tsv", row.names=FALSE, quote=FALSE)
-#write.table(enrichment_custom_translation, sep="\t", file="enrichment_IRES_TOP_miRNA_translation.tsv", row.names=FALSE, quote=FALSE)
+gseaplot(enrichment_miRNA_translation, geneSetID = "hsa-miR-4728-3p")
+gseaplot(enrichment_miRNA_transcription, geneSetID = "hsa-miR-4728-3p")
+gseaplot(enrichment_miRNA_translation, geneSetID = "hsa-miR-21-5p")
+gseaplot(enrichment_miRNA_transcription, geneSetID = "hsa-miR-21-5p")
+
+write.table(enrichment_KEGG_transcription, sep="\t", file="enrichment_KEGG_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_reactome_transcription, sep="\t", file="enrichment_reactome_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_GO_BP_transcription, sep="\t", file="enrichment_GO_BP_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_GO_MF_transcription, sep="\t", file="enrichment_GO_MF_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_GO_CC_transcription, sep="\t", file="enrichment_GO_CC_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_TFT_transcription, sep="\t", file="enrichment_TFT_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_unibind_transcription, sep="\t", file="enrichment_unibind_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_miRNA_transcription, sep="\t", file="enrichment_miRNA_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_custom_transcription, sep="\t", file="enrichment_IRES_TOP_transcription.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_hallmark_transcription, sep="\t", file="enrichment_HALLMARK_transcription.tsv", row.names=FALSE, quote=FALSE)
+
+write.table(enrichment_KEGG_translation, sep="\t", file="enrichment_KEGG_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_reactome_translation, sep="\t", file="enrichment_reactome_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_GO_BP_translation, sep="\t", file="enrichment_GO_BP_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_GO_MF_translation, sep="\t", file="enrichment_GO_MF_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_GO_CC_translation, sep="\t", file="enrichment_GO_CC_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_TFT_translation, sep="\t", file="enrichment_TFT_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_unibind_translation, sep="\t", file="enrichment_unibind_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_miRNA_translation, sep="\t", file="enrichment_miRNA_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_custom_translation, sep="\t", file="enrichment_IRES_TOP_translation.tsv", row.names=FALSE, quote=FALSE)
+write.table(enrichment_hallmark_translation, sep="\t", file="enrichment_HALLMARK_translation.tsv", row.names=FALSE, quote=FALSE)

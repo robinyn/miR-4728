@@ -5,23 +5,27 @@ library(stringr)
 setwd("~/Dev/mir-4728/5_GSEA")
 
 # Read gene list
-IRES_genes_RAW = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/human_IRES_info.txt")
+#IRES_genes_RAW = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/human_IRES_info.txt")
+IRES_genes_RAW = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/IRES_helena.txt")
 TOP_genes_RAW = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/5p_TOP_genes.txt", col_names = FALSE)
 targetscan = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/targetscan_predictions.txt")
+unibind = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/unibind_genes.txt", col_names = FALSE)
 
 mir_4728 = targetscan %>% 
   filter(`Representative miRNA`=="hsa-miR-4728-3p") %>% 
-  filter(as.numeric(`Cumulative weighted context++ score`) < -0.4)
+  filter(as.numeric(`Cumulative weighted context++ score`) < -0.1) %>% 
+  filter(as.numeric(`Total num nonconserved sites`) + as.numeric(`Number of 6mer sites`) > 2)
 
 mir_21 = targetscan %>% 
   filter(`Representative miRNA`=="hsa-miR-21-5p") %>% 
-  filter(as.numeric(`Cumulative weighted context++ score`) < -0.4)
+  filter(as.numeric(`Cumulative weighted context++ score`) < -0.1) %>% 
+  filter(as.numeric(`Total num nonconserved sites`) + as.numeric(`Number of 6mer sites`) >2)
 
 mir_4728$`Transcript ID` = mir_4728$`Transcript ID` %>% 
-  str_replace_all("\\.[0-9]*", "")
+  str_replace_all("\\.[0-9]*$", "")
 
 mir_21$`Transcript ID` = mir_21$`Transcript ID` %>% 
-  str_replace_all("\\.[0-9]*", "")
+  str_replace_all("\\.[0-9]*$", "")
 
 mart = useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", host="grch37.ensembl.org")
 
@@ -54,8 +58,8 @@ mir_21 = mir_21 %>%
 IRES_genes = getBM(attributes=c('hgnc_symbol',
                                 'ensembl_gene_id'),
                    filters='hgnc_symbol',
-                   values=unique(IRES_genes_RAW$`Gene symbol`),
-                   mart=mart) 
+                   values=unique(IRES_genes_RAW$ensembl_gene_id),
+                   mart=mart)
 
 TOP_genes = getBM(attributes=c('hgnc_symbol',
                                'ensembl_gene_id'),
@@ -75,8 +79,17 @@ IRES_genes = IRES_genes %>%
   dplyr::select(gs_name,ensembl_gene_id)
 
 custom_gs = TOP_genes %>% 
-  rbind(IRES_genes) %>% 
-  rbind(miRNA_targetsGS)
+  rbind(IRES_genes)
+
+colnames(unibind) = c("gs_name", "ensemble_gene_id")
+unibind$ensemble_gene_id = unibind$ensemble_gene_id %>% 
+  str_replace_all("\\.[0-9]*$", "")
+
+unibind_genes = unibind %>% 
+  dplyr::group_by(gs_name)
+
+
+  
 
 
 
