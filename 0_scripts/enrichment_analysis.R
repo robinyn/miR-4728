@@ -5,7 +5,6 @@ library(org.Hs.eg.db)
 library(tidyverse)
 library(msigdbr)
 
-# load("~/Dev/mir-4728/4_DE/polysome/polysome_anota2seq.robj")
 setwd("~/Dev/mir-4728/5_GSEA/results/DESeq2/ribosome/tables")
 
 polysome = read_tsv("~/Dev/mir-4728/4_DE/polysome/polysome_DESeq.txt")
@@ -30,7 +29,6 @@ names(geneList) = as.character(fcTable$geneID)
 geneList = sort(geneList, decreasing=TRUE)
 
 # miRNA target sites 
-
 
 enrichment_miRNA_transcription = GSEA(geneList = geneList,
                                       TERM2GENE = miRNA_targetsGS,

@@ -1,4 +1,3 @@
-library(RColorBrewer)
 library(stringr)
 library(ggplot2)
 library(tidyverse)
@@ -75,8 +74,7 @@ ribosome_anot = ribosome_dat %>%
 
 p = ggplot() +
   geom_bar(data=polysome_dat, stat="identity", aes(x=type, y=lfc, fill=padj)) +
-  scale_fill_gradient2(low="red", mid="purple",high="blue", midpoint=0.25, 
-                       breaks=c(0.01, 0.25, 0.5), guide="colorbar") +
+  scale_fill_gradient(low="red", high="grey", guide="colorbar") +
   geom_label(data=polysome_anot, aes(x=3, y=1, label=mode)) +
   facet_wrap(vars(geneID)) +
   labs(x="", y="Log2FC", title="Monosome")
@@ -85,8 +83,7 @@ print(p)
 
 p = ggplot() +
   geom_bar(data=ribosome_dat, stat="identity", aes(x=type, y=lfc, fill=padj)) +
-  scale_fill_gradient2(low="red", mid="purple",high="blue", midpoint=0.5, 
-                       breaks=c(0.01, 0.5, 0.9), guide="colorbar") +
+  scale_fill_gradient(low="red", high="grey", guide="colorbar") +
   geom_label(data=ribosome_anot, aes(x=3, y=1, label=mode)) +
   facet_wrap(vars(geneID)) +
   labs(x="", y="Log2FC", title="Ribosome")

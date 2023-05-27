@@ -26,7 +26,7 @@ translation_enrichment = translation_enrichment[order(translation_enrichment$p.a
 # translation_enrichment = translation_enrichment[order(translation_enrichment$enrichmentScore),]
 
 # Remove cutoff
-cutoff=25
+cutoff=20
 
 plot_data_transcription = transcription_enrichment[1:cutoff,] %>% 
   drop_na()
@@ -54,7 +54,12 @@ p = ggplot() +
   scale_y_discrete(limits=rev, labels=function(x) str_wrap(x, 60)) +
   scale_x_continuous(limits=c(-1, 1)) +
   labs(x="Enrichment score", y="Pathways") +
-  facet_wrap(vars(type))
+  facet_wrap(vars(type)) +
+  theme(axis.text.x=element_text(size=9),
+        axis.text.y=element_text(size=9),
+        axis.title=element_text(size=10),
+        legend.text=element_text(size=9),
+        plot.title=element_text(hjust=0.5, size=14))
 
 print(p)
 

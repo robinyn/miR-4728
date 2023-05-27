@@ -4,7 +4,7 @@ library(stringr)
 
 setwd("~/Dev/mir-4728")
 
-dat = read.csv("1_alignments/scanb_index/scanb_align_summary.tsv", sep="\t")
+dat = read.csv("2_alignments/polysome_HISAT2_final/parsed_output.tsv", sep="\t")
 
 dat$SampleID=dat$SampleID %>% 
   str_remove("_S[0-9]*$") %>% 
@@ -15,8 +15,12 @@ dat$SampleID=dat$SampleID %>%
 p = ggplot(dat, aes(x=SampleID, y=Overall.alignment.rate)) + 
   geom_bar(stat="identity", fill="darkgreen") +
   labs(x="Sample", y = "Overall alignment rate (%)", title="Alignment rate") +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1),
-        plot.title=element_text(hjust=0.5))
+  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1, size=12),
+        axis.text.y=element_text(size=12),
+        axis.title=element_text(size=13),
+        legend.text=element_text(size=12),
+        legend.title=element_blank(),
+        plot.title=element_text(hjust=0.5, size=14))
 
 print(p)
 
@@ -35,9 +39,12 @@ subset$Cat = subset$Cat %>%
 p = ggplot(subset, aes(x=SampleID, y=Values, fill=Cat)) +
   geom_bar(position="stack", stat="identity") +
   labs(x="Sample", y = "Percent of reads (%)", title="Paired/Unpaired reads") +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1),
+  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1, size=12),
+        axis.text.y=element_text(size=12),
+        axis.title=element_text(size=13),
+        legend.text=element_text(size=12),
         legend.title=element_blank(),
-        plot.title=element_text(hjust=0.5))
+        plot.title=element_text(hjust=0.5, size=14))
 
 # Paired/Unpaired counts
 subset = dat %>% 
@@ -50,9 +57,12 @@ subset$Cat = subset$Cat %>%
 p = ggplot(subset, aes(x=SampleID, y=Values, fill=Cat)) +
   geom_bar(position="stack", stat="identity") +
   labs(x="Sample", y = "Number of reads", title="Paired/Unpaired reads") +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1),
+  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1, size=12),
+        axis.text.y=element_text(size=12),
+        axis.title=element_text(size=13),
+        legend.text=element_text(size=12),
         legend.title=element_blank(),
-        plot.title=element_text(hjust=0.5))
+        plot.title=element_text(hjust=0.5, size=14))
 
 print(p)
 
@@ -86,10 +96,39 @@ total = dat %>%
 
 p = ggplot(total, aes(x=Paired, y=Values, fill=Cat)) +
   geom_bar(stat="identity", position="stack") +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1),
+  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1, size=12),
+        axis.text.y=element_text(size=12),
+        axis.title=element_text(size=13),
+        legend.text=element_text(size=12),
         legend.title=element_blank(),
-        plot.title=element_text(hjust=0.5)) +
+        plot.title=element_text(hjust=0.5, size=14)) +
   labs(x = "", y="Number of reads", title="Total RNA") +
+  facet_grid(~SampleID)
+
+print(p)
+
+p = ggplot(monosome, aes(x=Paired, y=Values, fill=Cat)) +
+  geom_bar(stat="identity", position="stack") +
+  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1, size=12),
+        axis.text.y=element_text(size=12),
+        axis.title=element_text(size=13),
+        legend.text=element_text(size=12),
+        legend.title=element_blank(),
+        plot.title=element_text(hjust=0.5, size=14)) +
+  labs(x = "", y="Number of reads", title="Monosome fraction") +
+  facet_grid(~SampleID)
+
+print(p)
+
+p = ggplot(polysome, aes(x=Paired, y=Values, fill=Cat)) +
+  geom_bar(stat="identity", position="stack") +
+  theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1, size=12),
+        axis.text.y=element_text(size=12),
+        axis.title=element_text(size=13),
+        legend.text=element_text(size=12),
+        legend.title=element_blank(),
+        plot.title=element_text(hjust=0.5, size=14)) +
+  labs(x = "", y="Number of reads", title="Polysome fraction") +
   facet_grid(~SampleID)
 
 print(p)

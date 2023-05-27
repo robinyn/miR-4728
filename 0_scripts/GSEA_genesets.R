@@ -5,7 +5,6 @@ library(stringr)
 setwd("~/Dev/mir-4728/5_GSEA")
 
 # Read gene list
-#IRES_genes_RAW = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/human_IRES_info.txt")
 IRES_genes_RAW = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/IRES_helena.txt")
 TOP_genes_RAW = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/5p_TOP_genes.txt", col_names = FALSE)
 targetscan = read_tsv("~/Dev/mir-4728/5_GSEA/genesets/targetscan_predictions.txt")

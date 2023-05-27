@@ -1,7 +1,7 @@
 # ===================================================================================================================================================================
-# Title: gtf_parser.py
+# Title: unibind_to_gene.py
 # Author: Euisuk Robin Han
-# Description: A parser for genome annotation GTF files to map features to genomic regions
+# Description: A parser for mapping unibind data to genes
 # Date: 02/May/23
 # ===================================================================================================================================================================
 
