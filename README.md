@@ -1,7 +1,7 @@
 #  Identification of targets for the microRNA miR-4728-3p in ribosome and polysome sequencing data
 
-Author: Euisuk Han
-Date: 27/05/23
+Author: Euisuk Han<br>
+Date: 27/05/23<br>
 GitHub Repository: https://github.com/robinyn/miR-4728
 
 ## Data
