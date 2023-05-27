@@ -4,6 +4,8 @@ Author: Euisuk Han<br>
 Date: 27/05/23<br>
 GitHub Repository: https://github.com/robinyn/miR-4728
 
+The links to scripts in the text will only be functional when viewing the README in the above GitHub repository.
+
 ## Data
 
 The data for this project consists of ribosome and polysome profiling data from SK-BR-3 (HER2-positive breast cancer cell line) transfected with antisense oligonucleotide (ASO) to block the miRNA with matched total RNA-seq. Control samples were transfected with scrambled ASO. There are three replicates per condition.
