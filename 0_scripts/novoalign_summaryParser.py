@@ -36,7 +36,7 @@ def init_args():
     return input_file, output_file, file_extension
 
 def parse_summary(input_file, output_file, file_extension):
-
+    # Open summary file and parse results
     try:
         with open(input_file, "r") as inFile, open(output_file, "w") as outFile:
             outFile.write("sampleID\ttot_seq_count\tuniq_count\tmulti_count\tno_count\n")

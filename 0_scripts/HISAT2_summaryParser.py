@@ -38,6 +38,7 @@ def init_args():
 def parse_summary(input_file, output_file, file_extension):
     summary_dict = {}
     num_samples = 0
+    # Open summary files and parse results
     try:
         with open(input_file, "r") as inFile, open(output_file, "w") as outFile:
             if input_file.split(".")[-1] != "txt":
@@ -85,6 +86,7 @@ def parse_summary(input_file, output_file, file_extension):
 
                             summary_dict[category]=count
 
+                    # Output to file
                     if index==0:
                         outFile.write("\t".join(summary_dict.keys()) + "\n")
                         outFile.write("\t".join(summary_dict.values()))

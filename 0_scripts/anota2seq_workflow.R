@@ -1,3 +1,9 @@
+# ============================================================================================================
+# Title: anota2seq_workflow.R
+# Author: Euisuk Robin Han
+# Description: A script for the DGE analysis of polysome profiling data using anota2seq
+# Date: 12/Apr/23
+# ============================================================================================================
 library(tidyverse)
 library(edgeR)
 library(limma)
@@ -8,7 +14,7 @@ library(DESeq2)
 setwd("~/Dev/mir-4728")
 
 # ======================== POLYSOME ========================
-# Import raw data
+# Import gene counts
 raw_dat = read.csv("3_counts/polysome_gene_counts.txt", sep="\t")
 sample_names = c("SK0001","SK0002","SK0003","SK0004","SK0005","SK0006","SK0007","SK0008","SK0009","SK0010",
                  "SK0011","SK0012","SK0013","SK0014","SK0015","SK0016","SK0017","SK0018")
@@ -30,27 +36,10 @@ sample_anot = data.frame(sample = sample_names,
                          replicate = c(rep(c(1,2,3), 6))) %>% 
   column_to_rownames("sample")
 
-# ======================== RIBOSOME ========================
-
-# ===========================================================
-# Select fraction
-frac_sel = "polysome"
-
-# PCA PC values
-# Polysome
-x_names = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", 
-            "PC10", "PC11", "PC12", "PC13", "PC14", "PC15", "PC16", "PC17", "PC18")
-# ===========================================================
-
 # Quality control
 
 # Create a PCA object 
 PCA_obj = as.matrix(dat)
-
-# PCA_obj = dat %>% 
-#   dplyr::select(1:12) 
-# 
-# PCA_obj = as.matrix(PCA_obj)
 
 # Remove zeros
 PCA_obj = PCA_obj[!apply(PCA_obj, 1, function(x)any(x==0)),]

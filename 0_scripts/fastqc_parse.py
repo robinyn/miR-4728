@@ -1,3 +1,10 @@
+# ===================================================================================================================================================================
+# Title: fastqc_parse.py
+# Author: Euisuk Robin Han
+# Description: A parser for FastQC reports
+# Date: 30/Mar/23
+# ===================================================================================================================================================================
+
 import argparse
 import os.path
 
@@ -15,6 +22,7 @@ def init_args():
     input_file = args.input
     output_file = args.output
 
+    # Check for invalid parameter inputs
     if not os.path.isfile(input_file):
         print("Invalid input file. Aborting...")
         exit()
@@ -44,9 +52,11 @@ def generate_summary(input_file):
                 len_count = 0
                 len_sum = 0
 
+                # Skip header lines
                 if report_dir.startswith("~"):
                     report_dir = os.path.expanduser(report_dir)
 
+                # Read QC reports and parse results using a series of IF statements
                 with open(report_dir, "r") as report_file:
                     print(report_dir)
                     for line in report_file:
@@ -97,6 +107,7 @@ def generate_summary(input_file):
     return(summary_list)
 
 def export_file(output_file, summary_list):
+    # Parsed data is exported as a TSV file
     try:
         with open(output_file, "w") as output_stream:
             for line in summary_list:

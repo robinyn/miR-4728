@@ -4,7 +4,6 @@
 # Description: A parser for mapping unibind data to genes
 # Date: 02/May/23
 # ===================================================================================================================================================================
-
 import argparse
 import os.path
 import csv
@@ -33,6 +32,7 @@ def init_args():
     feature = args.feature
     attribute = args.attribute
 
+    # Check for invalid parameters
     if not os.path.isfile(gtf_file):
         print("ERROR! Invalid input GTF file. Aborting...")
         exit()
@@ -66,11 +66,17 @@ def parse_gtf(input_file, parse_feature, parse_attr):
     attribute = ""
 
     try:
+        # Count total number of lines in the file for the progress bar
         num_lines = sum(1 for line in open(input_file, "r"))
+
+        # Open genome annotation (GTF) file and parse the selected feature and attribute
         with open(input_file, "r") as gtf_file:
             for line in tqdm(gtf_file, total=num_lines):
+                # Skip header lines
                 if line.startswith("##"):
                     continue
+
+                # Parse line
                 line = line.split("\t")
                 chromosome = line[0]
                 feature = line[2]
@@ -78,21 +84,27 @@ def parse_gtf(input_file, parse_feature, parse_attr):
                 end_pos = line[4]
                 strand = line[6]
 
+                # If the feature is not the wanted feature, move on to the next line
                 if feature != parse_feature:
                     continue
 
+                # Skip any non-standard chromosomes
                 if "chr" not in chromosome:
                     continue
 
+                # Split the parsed attributes
                 attr_list = line[8].split(";")
 
+                # Select the wanted attributed
                 for attr in attr_list:
                     if attr.strip().startswith(parse_attr):
                         attribute = attr.strip().split(" ")[1].removeprefix('"').removesuffix('"')
                         continue
 
+                # Append parsed feature/attribute to a list
                 parsed_anot.append([attribute, feature, chromosome, strand, start_pos, end_pos])
 
+                # Create a chromosome index to make searching through the annotation faster
                 if chromosome in chromosome_index.keys():
                     chromosome_index[chromosome].append(len(parsed_anot) - 1)
                 else:
@@ -114,12 +126,16 @@ def parse_unibind(input_file):
     antibody = ""
 
     try:
+        # Open UniBind file
         with open(input_file, "r") as unibind_file:
+            # Count total number of lines in the file for the progress bar
             num_lines = sum(1 for line in open(input_file, "r"))
+            # Read through UniBind file
             for line in tqdm(unibind_file, total=num_lines):
                 if line.startswith("filename"):
                     continue
 
+                # Parse data
                 line = line.strip().split("\t")
 
                 cell_type = line[1]
@@ -139,7 +155,7 @@ def parse_unibind(input_file):
     return parsed_unibind
 
 def coordinate_to_gene(annotation, chromosome_index, antibody, chromosome, strand, start_pos, end_pos):
-
+    # Convert chromosomal coordinates in UniBind data to gene ID
     for index in chromosome_index[chromosome]:
         entry = annotation[index]
 
@@ -147,9 +163,6 @@ def coordinate_to_gene(annotation, chromosome_index, antibody, chromosome, stran
             continue
 
         if (int(start_pos) > int(entry[4])-1000) and (int(end_pos) < int(entry[4])+200):
-            # print("{} is a target for {}".format(entry[0], antibody))
-            # print("Promoter region: {} - {}".format(int(entry[4])-1000, int(entry[4])+200))
-            # print("TFBS {} - {}".format(start_pos, end_pos))
             unibind_gene.append([antibody, entry[0]])
 
 print("\nInitializing arguments...")

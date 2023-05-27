@@ -1,3 +1,9 @@
+# ============================================================================================================
+# Title: DESeq2_workflow.R
+# Author: Euisuk Robin Han
+# Description: A script for the DGE analysis of polysome/ribosome profiling data using DESeq2 (deltaTE)
+# Date: 30/Apr/23
+# ============================================================================================================
 library(DESeq2)
 library(edgeR)
 library(limma)
@@ -7,6 +13,7 @@ library(stringr)
 
 setwd("~/Dev/mir-4728/3_counts/")
 
+# Change this to select which data to work with
 sel_Data = "ribosome"
 
 if(sel_Data=="polysome"){
@@ -18,17 +25,21 @@ if(sel_Data=="polysome"){
   
   colnames(raw_dat) = c("GeneID",sample_names)
   
+  # Reformat gene IDs to remove version numbers
   raw_dat$GeneID = raw_dat$GeneID %>% 
     str_remove("\\.[0-9]*$")
   
+  # Select the relevant data
   dat = raw_dat %>% 
     column_to_rownames("GeneID") %>% 
     dplyr::select(1:12)
   
+  # Remove summary lines from HTSeq-count
   dat = dat %>%  
     filter(!grepl("__", rownames(dat))) %>% 
     as.matrix()
   
+  # Remove any genes with 0 count in any of the samples
   dat[dat==0] = NA
   dat = dat[complete.cases(dat),]
   
@@ -51,17 +62,21 @@ if(sel_Data=="polysome"){
   
   colnames(raw_dat) = c("GeneID",sample_names)
   
+  # Reformat gene IDs to remove version numbers
   raw_dat$GeneID = raw_dat$GeneID %>% 
     str_remove("\\.[0-9]*$")
   
+  # Select the relevant data
   dat = raw_dat %>% 
     column_to_rownames("GeneID") %>% 
     dplyr::select(1:6, 13:18)
   
+  # Remove summary lines from HTSeq-count
   dat = dat %>%  
     filter(!grepl("__", rownames(dat))) %>% 
     as.matrix()
   
+  # Remove any genes with 0 count in any of the samples
   dat[dat==0] = NA
   dat = dat[complete.cases(dat),]
   
@@ -84,17 +99,21 @@ if(sel_Data=="polysome"){
   
   colnames(raw_dat) = c("GeneID",sample_names)
   
+  # Reformat gene ID to remove version numbers
   raw_dat$GeneID = raw_dat$GeneID %>% 
     str_remove("\\.[0-9]*$")
   
+  # Select the relevant data (remove failed replicate)
   dat = raw_dat %>% 
     column_to_rownames("GeneID") %>% 
     dplyr::select(c(1, 3:12))
   
+  # Remove summary lines from HTSeq-count
   dat = dat %>%  
     filter(!grepl("__", rownames(dat))) %>% 
     as.matrix()
   
+  # Remove genes with 0 count in any of the samples
   dat[dat==0] = NA
   dat = dat[complete.cases(dat),]
   
@@ -110,7 +129,6 @@ if(sel_Data=="polysome"){
   
 # ========================================================== 
 }
-
 dat_TE = dat
 dat_totalRNA = dat[,rownames(sample_table)[which(sample_table$type=="total")]]
 dat_polysome = dat[,rownames(sample_table)[which(sample_table$type==sel_Data)]]
@@ -165,9 +183,6 @@ pca_plot = ggplot(pca_obj, aes(x=PC1, y=PC2, color=Condition, shape=Type)) +
   ylab(paste0("PC2: ", percentVar[2], "% variance"))
 
 print(pca_plot)
-
-# print(plotPCA(rlog_counts_totalRNA, intgroup=c("condition")))
-# print(plotPCA(rlog_counts_polysome, intgroup=c("condition")))
 
 # Perform DGE analysis
 dds_TE = DESeq(dds_TE)
@@ -244,10 +259,6 @@ plot_table = deseq_TE %>%
   merge(deseq_polysome, by="geneID") %>% 
   mutate(mode="background")
 
-# Remove NAs 
-# plot_table = plot_table %>%
-#   drop_na()
-
 # Assign regulatory modes
 plot_table$mode[which(plot_table$TE_padj > 0.05 &
                         plot_table$totalRNA_padj < 0.05 &
@@ -287,4 +298,5 @@ p = ggplot() +
 
 print(p)
 
+# Output results to file
 write.table(plot_table, "~/Dev/mir-4728/4_DE/polysome/DESeq2/monosome_DESeq.txt", sep="\t", row.names=FALSE, quote=FALSE)

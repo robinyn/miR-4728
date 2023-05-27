@@ -1,17 +1,28 @@
+# ============================================================================================================
+# Title: TENT4B_PDCD4.R
+# Author: Euisuk Robin Han
+# Description: A script for the visualization of DGE analysis results for TENT4B and PDCD4. For internal use only
+# Date: 8/May/23
+# ============================================================================================================
 library(stringr)
 library(ggplot2)
 library(tidyverse)
 
 setwd("~/Dev/mir-4728/4_DE")
 
+# Read DGE analysis results
 polysome = read_tsv("polysome/polysome_DESeq.txt")
 monosome = read_tsv("monosome/monosome_DESeq.txt")
 ribosome = read_tsv("ribosome/ribosome_DESeq.txt")
 
+# ** The script currently only plots polysome and ribosome data **
+
+# Ensembl gene IDs for TENT4B and PDCD4
 TENT4B_ensembl = "ENSG00000121274"
 PDCD4_ensembl = "ENSG00000150593"
 
-polysome_dat = monosome %>% 
+# Find DGE results for TENT4B and PDCD4
+polysome_dat = polysome %>% 
   filter(geneID==TENT4B_ensembl |
            geneID==PDCD4_ensembl)
 ribosome_dat = ribosome %>% 
@@ -72,6 +83,7 @@ ribosome_anot = ribosome_dat %>%
   dplyr::select(geneID, mode) %>% 
   unique()
 
+# Plot data
 p = ggplot() +
   geom_bar(data=polysome_dat, stat="identity", aes(x=type, y=lfc, fill=padj)) +
   scale_fill_gradient(low="red", high="grey", guide="colorbar") +

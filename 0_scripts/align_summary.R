@@ -1,11 +1,19 @@
+# =====================================================================================================
+# Title: align_summary.R
+# Author: Euisuk Robin Han
+# Description: A script to visualize alignment results from HISAT2
+# Date: 28/Mar/23
+# =====================================================================================================
 library(tidyverse)
 library(ggplot2)
 library(stringr)
 
 setwd("~/Dev/mir-4728")
 
+# Read parsed summary 
 dat = read.csv("2_alignments/polysome_HISAT2_final/parsed_output.tsv", sep="\t")
 
+# Edit sample ID to make them easier to read
 dat$SampleID=dat$SampleID %>% 
   str_remove("_S[0-9]*$") %>% 
   str_replace_all("aso", "") %>% 
@@ -36,6 +44,7 @@ subset = dat %>%
 subset$Cat = subset$Cat %>% 
   str_replace_all("[.]", " ")
 
+# Plot data
 p = ggplot(subset, aes(x=SampleID, y=Values, fill=Cat)) +
   geom_bar(position="stack", stat="identity") +
   labs(x="Sample", y = "Percent of reads (%)", title="Paired/Unpaired reads") +
@@ -54,6 +63,7 @@ subset = dat %>%
 subset$Cat = subset$Cat %>% 
   str_replace_all("[.]", " ")
 
+# Plot data
 p = ggplot(subset, aes(x=SampleID, y=Values, fill=Cat)) +
   geom_bar(position="stack", stat="identity") +
   labs(x="Sample", y = "Number of reads", title="Paired/Unpaired reads") +
@@ -94,6 +104,7 @@ total = dat %>%
   mutate(SampleID = str_replace(SampleID, "SKBR3 tot 4728 ", "ASO")) %>% 
   mutate(SampleID = str_replace(SampleID, "SKBR3 tot ctrl ", "Control"))
 
+# Plot data
 p = ggplot(total, aes(x=Paired, y=Values, fill=Cat)) +
   geom_bar(stat="identity", position="stack") +
   theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1, size=12),

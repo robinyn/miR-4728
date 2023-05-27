@@ -1,3 +1,9 @@
+# ============================================================================================================
+# Title: enrichment_analysis.R
+# Author: Euisuk Robin Han
+# Description: A script for GSEA against GO, KEGG, REACTOME, TFT, UniBind, TargetScan, 5'TOP, IRES
+# Date: 18/Apr/23
+# ============================================================================================================
 library(stringr)
 library(clusterProfiler)
 library(AnnotationDbi)
@@ -7,10 +13,12 @@ library(msigdbr)
 
 setwd("~/Dev/mir-4728/5_GSEA/results/DESeq2/ribosome/tables")
 
+# Read in DGE results
 polysome = read_tsv("~/Dev/mir-4728/4_DE/polysome/polysome_DESeq.txt")
 ribosome = read_tsv("~/Dev/mir-4728/4_DE/ribosome/ribosome_DESeq.txt")
 monosome = read_tsv("~/Dev/mir-4728/4_DE/monosome/monosome_DESeq.txt")
 
+# Select data for GSEA
 plot_table = ribosome 
 
 fcTable_transcription = plot_table %>%
@@ -121,6 +129,7 @@ enrichment_KEGG_transcription <- gseKEGG(geneList = geneList,
                                          pvalueCutoff = 1,
                                          verbose = FALSE)
 
+# Reformat gene set descriptions to make them more legible
 enrichment_reactome_transcription@result$Description = enrichment_reactome_transcription@result$Description %>%
   str_replace_all("_", " ") %>%
   str_remove_all("REACTOME ")
@@ -246,6 +255,7 @@ enrichment_KEGG_translation <- gseKEGG(geneList = geneList,
                                        pvalueCutoff = 1,
                                        verbose = FALSE)
 
+# Reformat gene set descriptions to make them more legible
 enrichment_reactome_translation@result$Description = enrichment_reactome_translation@result$Description %>%
   str_replace_all("_", " ") %>%
   str_remove_all("REACTOME ")
@@ -269,11 +279,13 @@ enrichment_hallmark_translation@result$Description = enrichment_hallmark_transla
 enrichment_TFT_translation@result$Description = enrichment_TFT_translation@result$Description %>% 
   str_replace_all("_", " ")
 
+# Generate enrichment plots for miRNA targets 
 gseaplot(enrichment_miRNA_translation, geneSetID = "hsa-miR-4728-3p")
 gseaplot(enrichment_miRNA_transcription, geneSetID = "hsa-miR-4728-3p")
 gseaplot(enrichment_miRNA_translation, geneSetID = "hsa-miR-21-5p")
 gseaplot(enrichment_miRNA_transcription, geneSetID = "hsa-miR-21-5p")
 
+# Output enrichment results to files
 write.table(enrichment_KEGG_transcription, sep="\t", file="enrichment_KEGG_transcription.tsv", row.names=FALSE, quote=FALSE)
 write.table(enrichment_reactome_transcription, sep="\t", file="enrichment_reactome_transcription.tsv", row.names=FALSE, quote=FALSE)
 write.table(enrichment_GO_BP_transcription, sep="\t", file="enrichment_GO_BP_transcription.tsv", row.names=FALSE, quote=FALSE)

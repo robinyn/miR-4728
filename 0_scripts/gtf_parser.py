@@ -3,6 +3,9 @@
 # Author: Euisuk Robin Han
 # Description: A parser for genome annotation GTF files to map features to genomic regions
 # Date: 02/May/23
+#
+#                               ****CURRENTLY DOES NOT WORK****
+#
 # ===================================================================================================================================================================
 
 import argparse
@@ -28,6 +31,7 @@ def init_args():
     feature = args.feature
     attribute = args.attribute
 
+    # Check for invalid parameters
     if not os.path.isfile(input_file):
         print("ERROR! Invalid input file. Aborting...")
         exit()

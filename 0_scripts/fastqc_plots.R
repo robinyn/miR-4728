@@ -1,29 +1,29 @@
+# ============================================================================================================
+# Title: fastqc_plots.R
+# Author: Euisuk Robin Han
+# Description: A script for the visualization of FastQC results
+# Date: 11/Apr/23
+# ============================================================================================================
 library(tidyverse)
 
 setwd("~/Dev/mir-4728")
 
+# Read parsed QC results
 dat = read.csv("1_fastqc/ribosome_summary.tsv", sep="\t")
 
-# dat$sample_name = dat$sample_name  %>%
-#   str_remove("_S[0-9]*") %>%
-#   str_replace_all("001.fastq.gz", "") %>%
-#   str_replace_all("_", " ")
-# 
-# dat = dat %>%
-#   mutate(fraction=case_when(grepl("monosome", sample_name) ~ "monosome",
-#                             grepl("polysome", sample_name) ~ "polysome",
-#                             grepl("tot", sample_name) ~ "total")) %>%
-#   mutate(fraction=as.factor(fraction))
-
+# Reformat sample names to make them more legible
 dat$sample_name = dat$sample_name %>%
   str_remove(".1.fastq.gz") %>%
   str_replace_all("_", " ")
 
+# Assign groups depending on which fraction the sample is from
+# Edit this part when switching between polysome/ribosome datasets
 dat = dat %>%
   mutate(Fraction=case_when(grepl("RPF", sample_name) ~ "RPF",
                             grepl("total", sample_name) ~ "Total")) %>%
   mutate(Fraction=as.factor(Fraction))
 
+# Generate total read count plot
 p = ggplot(dat, aes(x=sample_name, y=total_read_count, fill=Fraction)) +
   geom_bar(stat="identity") +
   labs(x="Sample", y = "Number of reads", title="Total number of reads") +
@@ -35,6 +35,7 @@ p = ggplot(dat, aes(x=sample_name, y=total_read_count, fill=Fraction)) +
         plot.title=element_text(hjust=0.5, size=14))
 print(p)
 
+# Generate GC content plot
 p = ggplot(dat, aes(x=sample_name, y=gc_content, fill=Fraction)) +
   geom_bar(stat="identity") +
   labs(x="Sample", y = "GC content (%)", title="Mean GC content") +
@@ -46,6 +47,7 @@ p = ggplot(dat, aes(x=sample_name, y=gc_content, fill=Fraction)) +
         plot.title=element_text(hjust=0.5, size=14))
 print(p)
 
+# Generate mean read length plot
 p = ggplot(dat, aes(x=sample_name, y=mean_read_len, fill=Fraction)) +
   geom_bar(stat="identity") + 
   geom_point(aes(x=sample_name, y=max_read_len), shape=6) +

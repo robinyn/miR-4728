@@ -1,3 +1,9 @@
+# ============================================================================================================
+# Title: GSEA_results_analysis.R
+# Author: Euisuk Robin Han
+# Description: A script for analyzing the GSEA results further. Only meant to be used internally. 
+# Date: 18/May/23
+# ============================================================================================================
 library(tidyverse)
 
 polysome = read_tsv("~/Dev/mir-4728/4_DE/polysome/polysome_DESeq.txt")
