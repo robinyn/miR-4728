@@ -4,7 +4,8 @@ Author: Euisuk Han<br>
 Date: 27/05/23<br>
 GitHub Repository: https://github.com/robinyn/miR-4728
 
-The links to scripts in the text will only be functional when viewing the README in the above GitHub repository.
+All of the scripts required to reproduce the analyses outlined in this README can be found in the GitHub repository.
+The links to scripts in the text will only be functional when viewing the README in the above repository.
 
 ## Data
 
