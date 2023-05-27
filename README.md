@@ -34,7 +34,7 @@ The following R(v4.3.2) packages were also installed:
 - limma (v3.54.2)
 
 
-```shell
+```bash
 # Create conda environment
 conda create -n mir-4728 python=3.7.12
 
@@ -91,7 +91,7 @@ Both datasets were tested using FastQC to ensure that all sample files were suit
 
 ### 0.1. Polysome profiling data
 
-```shell
+```bash
 # Generate a list of files and their directories to be checked
 ls ~/directory/with/data/files | while read line; do echo ~/directory/of/data/file/$line; done > files_list.txt
 
@@ -101,7 +101,7 @@ cat files_list.txt | while read file; do fastqc -o 0_fastqc --noextract $file
 
 ### 0.2. Ribosome profiling data
 
-```shell
+```bash
 # Generate a list of files and their directories to be checked
 ls ~/directory/with/data/files | while read line; do echo ~/directory/of/data/file/$line; done > files_list.txt
 
@@ -125,7 +125,7 @@ Unfortunately, the indexing of a human genome with transcript annotations requir
 
 The reads from the polysome profiling were aligned to the reference index, using [HISAT2](http://daehwankimlab.github.io/hisat2/manual/). The alignment output was directly piped into samtools to sort and convert them from SAM to BAM formats.
 
-```shell
+```bash
 cat files_list.txt | while read line;do file_dir=$(echo ../data/$line); file_name=$(echo $line | cut -d "/" -f 2); file_folder=$(echo $line | cut -d "/" -f 1); mate_1=$(echo ${file_dir}_R1_001.fastq.gz); mate_2=$(echo ${file_dir}_R2_001.fastq.gz); echo $file_name; hisat2 -p 15 -q --fr --new-summary --summary-file 1_alignments/summary/$file_name.sam.summary --dta --rna-strandness RF --non-deterministic --max-intronlen 2000000 -x ../reference/hisat2/genome_snp_tran -1 $mate_1 -2 $mate2 | samtools sort -o 1_alignments/$file_folder/$file_name.bam; done;
 ```
 
@@ -133,7 +133,7 @@ cat files_list.txt | while read line;do file_dir=$(echo ../data/$line); file_nam
 
 A list of summary files and their directories was generated using bash.
 
-```shell
+```bash
 ls directory/with/summary/files | while read file; do echo summary_files/$file; done > sample_list.txt
 ```
 
@@ -145,7 +145,7 @@ A custom Python [script](0_scripts/HISAT2_summaryParser.py) was used to parse th
 
 While Novoalign includes the protocol for generating an index with known transcripts, the protocol was extremely long and poorly documented. It was decided that the benefits of attempting to create an index with transcriptome annotation was not great enough to outweigh the time and resources it would require. Therefore, an index was created with only the genome assembly. The same GRCh38 genome assembly used for the HISAT2 index was used.
 
-```shell
+```bash
 # Index is created
 novoindex ~/reference/novoalign/GRCh38_no_alt_maskedGRC.nix ~/reference/raw/GCA_000001405.15_GRCh38_no_alt_analysis_set_maskedGRC_exclusions_v2.fasta
 
@@ -155,7 +155,7 @@ ln -s ~/reference/novoalign/GRCh38_no_alt_maskedGRC.nix ~/ribosome/index_link.ni
 
 In addition to the reference genome, another index was created for the complete human ribosomal DNA repeating units (U13369.1).
 
-```shell
+```bash
 # Index is created
 novoindex ~/reference/novoalign/rRNA.nix ~/reference/raw/human_complete_rRNA.fasta
 
@@ -167,13 +167,13 @@ ln -s ~/reference/novoalign/rRNA.nix ~/ribosome/rRNA_link.nix
 
 Novoalign was run using the index file created above. The alignment parameters were set to be extra sensitive compared to regular RNA seq alignments, due to the short read lengths of the RPFs. Novoalign also allows the clipping of adapter sequences that may be present in the 3' ends of the reads. Therefore, the adapter sequence used for the Ribo-seq procedure was provided to the aligner.
 
-```shell
+```bash
 ls data | while read file; do sample_name=$(echo $file | sed "s/.fastq.gz//"); echo $file; novoalign -c 15 -d index_link.nix -f data/$file -F STDFQ -a AGATCGGAAGAGCACACGTCT -l 17 -h -1 -1 -t 90 -g 50 -x 15 -o SAM -o FullNW -r All 51 -e 51 2> 1_alignments/novoalign/genome/$file.summary | samtools sort -o 1_alignments/novoalign/genome/$sample_name.bam; done;
 ```
 
 The ribosome dataset was aligned again to the rDNA repeats to determine the approximate levels of rRNA still remaining in the data. It was determined that while it is probably not necessary to remove such reads mapping as rRNA, it would still be beneficial to see how successful the rRNA depletion step was. '
 
-```shell
+```bash
 ls data | while read file; do sample_name=$(echo $file | sed "s/.fastq.gz//"); echo $file; novoalign -c 15 -d rRNA_link.nix -f data/$file -F STDFQ -a AGATCGGAAGAGCACACGTCT -l 17 -h -1 -1 -t 90 -g 50 -x 15 -o SAM -o FullNW -r All 51 -e 51 2> 1_alignments/novoalign/rRNA/$file.summary | samtools sort -o 1_alignments/novoalign/rRNA/$sample_name.bam; done;
 ```
 
@@ -187,13 +187,13 @@ Another set of alignments were produced using HISAT2 in order to compare the two
 
 Before the alignment could be performed, the adapter sequences were trimmed as HISAT2 is not capable of adapter trimming on its own, unlike Novoalign.
 
-```shell
+```bash
 ls data | while read file; do sample_name=$(echo $file|sed "s/.1.fastq.gz//"); echo $file; trimmomatic SE -threads 15 -phred33 -summary 0_trimming/$sample_name.trim.summary data/$file 0_trimming/$sample_name.trimmed.fastq ILLUMINACLIP:$HOME/bin/miniconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic-0.39-2/adapters/TruSeq3-SE.fa:2:30:10 SLIDINGWINDOW:4:25 MINLEN 17; done;
 ```
 
 The trimmed sequences were passed to FastQC to evaluate the trimming results.
 
-```shell
+```bash
 ls 0_trimming/ | grep -v ".summary" | while read file; do echo $file; fastqc -o 0_fastqc/trimmed/ --noextract 0_trimming/$file; done;
 ```
 
@@ -203,7 +203,7 @@ The trimming results were parsed using a python [script](0_scripts/fastqc_parse.
 
 The trimmed sequences were then aligned to the reference genome.
 
-```shell
+```bash
 ls data | while read file; do sample_name=$(echo $file | sed "s/.1.fastq.gz//"); echo $file; hisat2 -p 15 -q --phred33 --new-summary --summary-file 1_alignments/hisat2/summary/$sample_name.sam.summary --dta --rna-strandness R --non-deterministic --max-intronlen 2000000 -x ../reference/hisat2/genome_snp_tran -U data/$file | samtools sort -o 1_alignments/hisat2/$file_folder/$sample_name.bam; done;
 ```
 
@@ -215,7 +215,7 @@ ls data | while read file; do sample_name=$(echo $file | sed "s/.1.fastq.gz//");
 
 #### 2.1.1. Read counts of polysome data with HTSeq-count
 
-```shell
+```bash
 # Generate a list of alignment (BAM) files
 ls directory/with/alignment/files | while read file; do echo directory/to/files/$file; done > alignments_list.txt
 
@@ -227,7 +227,7 @@ files=$(cat alignments_list.txt | awk '{print}' ORS=" "); htseq-count -f bam -r 
 
 #### 2.2.1. Read counts of ribosome data with HTSeq-count
 
-```shell
+```bash
 # Generate a list of alignment (BAM) files
 ls directory/with/alignment/files | while read file; do echo directory/to/files/$file; done > alignments_list.txt
 
